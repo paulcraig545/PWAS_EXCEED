@@ -1,4 +1,4 @@
-# MetWAS-EXCEED
+# PWAS-EXCEED
 External validation of protein-wide association study of major depressive disorder
 
 Shared files required:
