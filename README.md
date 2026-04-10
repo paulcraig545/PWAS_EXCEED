@@ -6,31 +6,27 @@ Shared files required:
 2) protein_list.rds: List of proteins with non-zero coefficient (LASSO) used in calculating the protein scores
 
 ## Overall summary:
-1) Perform z-score standardisation using preprocessing_proteins.R to scale the proteins
+1) Perform rank transformation using preprocessing_proteins.R to standardise the proteins
 2) Run protS_calc.R to apply the weights from our training model to your cohort and produce a protein score for each participant in your cohort
-3) Run four predictive models to use the protein scores created in the previous step to predict major depressive disorder status in your cohort
+3) Run predictive models to use the protein scores created in the previous step to predict major depressive disorder status in your cohort
   - MDD ~ scale(MDD_protS) + age + sex + techinical covariates in ALL participants
-  - MDD ~ scale(MDD_protS) + age + sex + techinical covariates in MDD cases only (please add mdd as a column to the covariate file)
-  - MDD ~ scale(MDD_protS) + age + sex + techinical covariates + lifestyle covariates in ALL participants
-  - MDD ~ scale(MDD_protS) + age + sex + techinical covariates + lifestyle covariates in MDD cases only \
-*Technical covariates can be variables such as assessment centre, spectrometer (if applicable) \
-*Lifestyle covariates can be variables such as BMI, smoking status, socioeconomic status, educational level, MDD diagnosis, ethnicity, depressive symptom scores, alcohol drinking (only when applicable) 
-4) Run cohort_demograph_info.R to generate a demographic table about your cohort 
+*Technical covariates can be variables such as assessment centre, spectrometer (if applicable)
 
 Please refer to the following information for further details and please let us know if you have any questions, thank you so much for your help!
 
-## protein preprocessing: Z-score standardisation
-The protein scores were trained using standardised protein levels using rank standardisation. Therefore we would like the protein scores to be calculated also using standardised protein levels.
+## protein preprocessing: Rank standardisation
+The protein scores were trained using standardised protein levels using rank standardisation. Therefore the protein scores should also be calculated using standardised protein levels. 
+This script will carry out rank transformation on the protein data.
 
 The R script preprocessing_proteins.R will read :
 1) The dataframe (as .rds format) containing your cohort's protein levels, it should have rows as participant ID and columns as protein names.
-2) The protein_list.rds file which contains a list of probe proteins provided by us
-Then the R script will filter your cohort's proteins to the probe proteins from our training model and scale them
+2) The protein_list.rds file which contains a list of proteins provided by us
+Then the R script will filter your cohort's proteins to the proteins from our training model and scale them
 
 Arguments:
 --cohort : Cohort name, e.g 'GS' or 'EXCEED' \
 --proteins : The file path to the protein file (rds format) \
---probe : The file path for the list of probe proteins from LASSO (non-zero coefficients) provided by us \
+--probe : The file path for the list of proteins from LASSO (non-zero coefficients) provided by us \
 --id_column : The column name of the identifier column (default == ID) \
 --outdir : The directory where the outputs will be saved
 
@@ -98,78 +94,5 @@ Rscript basic_model_all.R \
 --ps "/Users/Desktop/GS_MDD_protS.rds" \
 --pheno "/Users/Desktop/pheno.rds" \
 --basic_covs "/Users/Desktop/basic_covs.rds" \
---outdir "/Users/Desktop/"
-```
-
-## Predictive model 2 : basic model in MDD cases only
-The basic_model_mdd.R script is similar to model 1, but with additional mdd column (MDD diagnosis) and it will filter out participants with no MDD diagnosis
-1) The _MDD_protS.rds file from protS_calc.R output
-2) The major depressive disorder phenotype in your cohort (0 = controls, 1 = cases), this file should be .rds format with two columns, ID and MDD
-3) A .rds file with ID and the **basic covariates** including sex, age, mdd, techinical covariates such as assessment_centre and/or spectrometer (if applicable) as columns. The mdd column should be coded into 0/1 (1 = mdd, 0 = controls), the basic_model_mdd.R script will filter out the controls.
-   
-```bash
-Rscript basic_model_mdd.R \
---cohort "GS" \
---id_column "ID" \
---ps "/Users/Desktop/GS_MDD_protS.rds" \
---pheno "/Users/Desktop/pheno.rds" \
---basic_covs "/Users/Desktop/basic_covs.rds" \
---outdir "/Users/Desktop/"
-```
-
-## Predictive model 3 : complex model in all participants
-This is also similar to model 1 but with additional lifestyle-related covariates such as BMI, smoking status, socioeconomic status, educational level, MDD diagnosis, ethnicity, depressive symptom scores, alcohol drinking (only when applicable)
-
-The R script complex_model_all.R will read:
-1) The _MDD_protS.rds file from protS_calc.R output
-2) The major depressive disorder phenotype in your cohort (0 = controls, 1 = cases), this file should be .rds format with two columns, ID and MDD
-3) A .rds file with ID and the **complex covariates** including sex, age, techinical covariates such as assessment_centre and/or spectrometer, and lifestyle covariates (if applicable) as columns.
-
-```bash
-Rscript complex_model_all.R \
---cohort "GS" \
---id_column "ID" \
---ps "/Users/Desktop/GS_MDD_protS.rds" \
---pheno "/Users/Desktop/pheno.rds" \
---complex_covs "/Users/Desktop/complex_covs.rds" \
---outdir "/Users/Desktop/"
-```
-
-## Predictive model 4 : complex model in MDD cases only
-This is also similar to model 3 (with lifestyle-related covariates) but in MDD cases only
-
-The R script complex_model_mdd.R will read:
-1) The _MDD_protS.rds file from protS_calc.R output
-2) The major depressive disorder phenotype in your cohort (0 = controls, 1 = cases), this file should be .rds format with two columns, ID and MDD
-3) A .rds file with ID and the **complex covariates** including sex, age, techinical covariates such as assessment_centre and/or spectrometer, and lifestyle covariates (if applicable) as columns. The mdd column should be coded into 0/1 (1 = mdd, 0 = controls), the complex_model_mdd.R script will filter out the controls.
-
-```bash
-Rscript complex_model_mdd.R \
---cohort "GS" \
---id_column "ID" \
---ps "/Users/Desktop/GS_MDD_protS.rds" \
---pheno "/Users/Desktop/pheno.rds" \
---complex_covs "/Users/Desktop/complex_covs.rds" \
---outdir "/Users/Desktop/"
-```
-
-## Demographic information about your cohort
-The file cohort_demograph_info.R will generate a table of demographic information of your cohort (useful for the manuscript and interpretating our results). It formats information on age, sex, bmi, MDD diagnosis, and AD MetS (generated from protS_calc.R).
-
---cohort: Cohort name, e.g 'GS' or 'EXCEED' \
---id_column: The column name of the identifier column (default == ID) \
---ps: The filepath to the _MDD_protS.rds file from protS_calc.R output (colnames: ID, MDD_protS) \
---pheno: The filepath to the AD phenotype file (colnames: ID, MDD(0 = no exposure/1 = major depressive disorder)) \
---demo: Filepath to the file containing demographic variables: age(numeric), sex(factor: Male/Female), bmi(numeric), mdd(factor: 0 = controls/1 = cases), MDD_protS)
---outdir : The directory where the results will be saved 
-
-
-```bash
-Rscript cohort_demograph_info.R \
---cohort "GS" \
---id_column "ID" \
---ps "/Users/Desktop/GS_MDD_protS.rds" \
---pheno "/Users/Desktop/pheno.rds" \
---demo "/Users/Desktop/covs.rds" \
 --outdir "/Users/Desktop/"
 ```
