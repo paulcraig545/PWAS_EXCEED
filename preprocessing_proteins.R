@@ -63,7 +63,7 @@ print('Read in files')
 print('Filter to just the LASSO proteins')
 ms_prot <- proteins %>% select(c(all_of(id_col), intersect(names(proteins), prot_list)))
 
-print(paste0('Filtered to ', ms_prot %>% select(-id_col) %>% ncol())) 
+print(paste0('Filtered to ', ms_prot %>% select(-all_of(id_col)) %>% ncol())) 
 rm(proteins) # remove large protein object 
 
 ###############################################################################
@@ -135,7 +135,7 @@ ggsave(filename=paste0(out_dir, cohort, "_", "_std_unstd_proteins.png"),prot_dis
 
 ###############################################################################
 
-outfile <- paste0(out_dir, cohort, "_", "_std_proteins.rds")
+outfile <- paste0(out_dir, cohort, "_std_proteins.rds")
 saveRDS(prot_std, outfile)
 sink()
 
