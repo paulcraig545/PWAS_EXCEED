@@ -39,7 +39,7 @@ Arguments:
 --binary_pheno : \
 --binary_pheno_name : \
 --continuous_pheno : \
---continuous_pheno_name : \ 
+--continuous_pheno_name : \
 --covs : \
 --outdir : The directory where the outputs will be saved
 
