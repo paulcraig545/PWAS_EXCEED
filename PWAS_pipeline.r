@@ -30,7 +30,8 @@ option_list <- list(
   make_option('--continuous_pheno', type = 'character', default = NULL, help = 'File path to continuous phenotype file'),
   make_option('--continuous_pheno_name', type = 'character', default = "GHQ", help = 'Name of continuous phenotype'),
   make_option('--covs', type = 'character', default = NULL, help = 'File path to covariates file'),  
-  make_option('--outdir', type = 'character', help = 'The filepath for output directory', action = 'store')
+  make_option('--outdir', type = 'character', help = 'The filepath for output directory', action = 'store'),
+  make_option('--missingness_cov', type = 'character', default = FALSE, help = 'If TRUE use N missing proteins as a covariate. Default FALSE.')
 )
 
 args = commandArgs(trailingOnly=TRUE)
@@ -44,6 +45,7 @@ probe_filepath=opt$probe # List of protein names
 id_col <- opt$id_column # Vector of identifier column
 covs_fp <- opt$covs
 out_dir <- opt$outdir
+missingness_cov <- opt$missingness_cov
 
 sink(file.path(out_dir, "protein_score.log"))
 
@@ -87,8 +89,9 @@ long_prot_std <- prot_std %>%
 # Covariates formula
 all_covs <- readRDS(covs_fp)
 
-# all_covs <- all_covs |> rename(id = all_of(id_col)) |> merge(missingness, by = "id")
-
+if(missingness_cov==TRUE){
+  all_covs <- all_covs |> rename(id = all_of(id_col)) |> merge(missingness, by = "id")
+}
 covs_ls <- colnames(all_covs)[colnames(all_covs) != id_col]
 covs_formu = paste0(covs_ls, collapse = " + ")
 
