@@ -32,15 +32,15 @@ Arguments:
 --proteins : The file path to the protein file (rds format) \
 --probe : The file path for the list of proteins from LASSO(non-zero coefficients) provided by us (protein_list_newProts.rds)  \
 --id_column : The column name of the identifier column (default == ID) \
---binary_weights :
---binary_weights_name :
---continuous_weights :
---continuous_weights_name :
---binary_pheno :
---binary_pheno_name : 
---continuous_pheno :
---continuous_pheno_name : 
---covs :
+--binary_weights : \
+--binary_weights_name : \
+--continuous_weights : \
+--continuous_weights_name : \
+--binary_pheno : \
+--binary_pheno_name : \
+--continuous_pheno : \
+--continuous_pheno_name : \ 
+--covs : \
 --outdir : The directory where the outputs will be saved
 
 Example:
