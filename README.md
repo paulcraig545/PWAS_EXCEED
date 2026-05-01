@@ -32,32 +32,53 @@ Arguments:
 --proteins : The file path to the protein file (rds format) \
 --probe : The file path for the list of proteins from LASSO(non-zero coefficients) provided by us (protein_list_newProts.rds)  \
 --id_column : The column name of the identifier column (default == ID) \
---binary_weights : \
---binary_weights_name : \
---continuous_weights : \
---continuous_weights_name : \
---binary_pheno : \
---binary_pheno_name : \
---continuous_pheno : \
---continuous_pheno_name : \
---covs : \
---outdir : The directory where the outputs will be saved
+--binary_weights : The file path for proteins and their LASSO weights trained on MDD status in GS cohort provided by us (GS_lasso_weights_MDD_newProts.rds) \
+--binary_weights_name : Name of the binary phenotype the weights where trained on (e.g. "MDD") \
+--continuous_weights : The file path for proteins and their LASSO weights trained on GHQ status in GS cohort provided by us (GS_lasso_weights_likert_D_newProts.rds or GS_lasso_weights_likert_total_newProts.rds) \
+--continuous_weights_name : Name of the binary phenotype the weights where trained on (e.g. "GHQ_D" or "GHQ_total") \
+--binary_pheno : The file path for the outcome binary phenotype \
+--binary_pheno_name : Name of the outcome binary phenotype (e.g. "MDD") \
+--continuous_pheno : The file path for the outcome continuous phenotype \
+--continuous_pheno_name : Name of the outcome continuous phenotype (e.g. "PHQ") \
+--covs : The file path for the covariates \
+--outdir : Name of the directory where the outputs will be saved. The directory will be created by the script.
 
-Example:
+## Running the pipeline
+
+To run the pipeline simply copy the command below after replacing the appropriate arguments (in square brackets e.g. ["binary_pheno_file"]) with your own data. 
+
 ```bash
-Rscript PWAS_pipeline.r 
-    --cohort "GS" 
-    --proteins "test_prot_data_newProts.rds" 
-    --probe "protein_list_newProts.rds" 
-    --id_column "id" 
-    --binary_weights "GS_lasso_weights_MDD_newProts.rds" 
-    --binary_weights_name "MDD" 
-    --continuous_weights "GS_lasso_weights_likert_D_newProts.rds" 
-    --continuous_weights_name "GHQ_D" 
-    --binary_pheno "mdd_pheno.rds" 
-    --binary_pheno_name "MDD" 
-    --continuous_pheno "likert_D_pheno.rds" 
-    --continuous_pheno_name "GHQ_D" 
-    --covs "basic_covs.rds" 
+Rscript PWAS_pipeline.r \
+    --cohort "GS" \
+    --proteins ["proteins_file.rds"] \
+    --probe "protein_list_newProts.rds" \
+    --id_column "id" \
+    --binary_weights "GS_lasso_weights_MDD_newProts.rds" \
+    --binary_weights_name "MDD" \
+    --continuous_weights "GS_lasso_weights_likert_D_newProts.rds" \
+    --continuous_weights_name "GHQ_D" \
+    --binary_pheno ["binary_pheno_file.rds"] \
+    --binary_pheno_name ["binary_pheno_name"] \
+    --continuous_pheno ["continuous_pheno_file.rds"] \
+    --continuous_pheno_name ["continuous_pheno_name"] \
+    --covs ["covariates_file.rds"] \
+    --outdir "PWAS_pipeline_out/"
+```
+
+Run the pipeline a second time, with the continuous weights arguments replaced with the weights trained on the total GHQ score which we have provided, to get the outputs for protein scores trained on GHQ total.  
+
+```bash
+Rscript PWAS_pipeline.r \
+    --cohort "GS" \
+    --proteins ["proteins_file.rds"] \
+    --probe "protein_list_newProts.rds" \
+    --id_column "id" \
+    --continuous_weights "GS_lasso_weights_likert_total_newProts.rds" \
+    --continuous_weights_name "GHQ_total" \
+    --binary_pheno ["binary_pheno_file.rds"] \
+    --binary_pheno_name ["binary_pheno_name"] \
+    --continuous_pheno ["continuous_pheno_file.rds"] \
+    --continuous_pheno_name ["continuous_pheno_name"] \
+    --covs ["covariates_file.rds"] \
     --outdir "PWAS_pipeline_out/"
 ```

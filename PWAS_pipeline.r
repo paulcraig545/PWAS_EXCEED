@@ -21,15 +21,15 @@ option_list <- list(
   make_option('--proteins', type='character', help="The filepath for proteins file", action='store'), 
   make_option('--probe', type = 'character', help= "The filepath for the list of proteins", action = 'store'),
   make_option('--id_column', type = 'character', default="ID", help = "Column name for identifier column", action = 'store'),
-  make_option('--binary_weights', type = 'character', default = NULL, help = "Weights file from binary phenotype for calculating scores"),
+  make_option('--binary_weights', type = 'character', default = "NULL", help = "Weights file from binary phenotype for calculating scores"),
   make_option('--binary_weights_name', type = 'character', default = "MDD", help = "Name of phenotype used for making binary weights"),
-  make_option('--continuous_weights', type = 'character', default = NULL, help = "Weights file from continuous phenotype for calculating scores"),
+  make_option('--continuous_weights', type = 'character', default = "NULL", help = "Weights file from continuous phenotype for calculating scores"),
   make_option('--continuous_weights_name', type = 'character', default = "GHQ", help = "Name of phenotype used for making continuous weights"),
-  make_option('--binary_pheno', type = 'character', default = NULL, help = 'File path to binary phenotype file'),
+  make_option('--binary_pheno', type = 'character', default = "NULL", help = 'File path to binary phenotype file'),
   make_option('--binary_pheno_name', type = 'character', default = "MDD", help = 'Name of binary phenotype'),
-  make_option('--continuous_pheno', type = 'character', default = NULL, help = 'File path to continuous phenotype file'),
+  make_option('--continuous_pheno', type = 'character', default = "NULL", help = 'File path to continuous phenotype file'),
   make_option('--continuous_pheno_name', type = 'character', default = "GHQ", help = 'Name of continuous phenotype'),
-  make_option('--covs', type = 'character', default = NULL, help = 'File path to covariates file'),  
+  make_option('--covs', type = 'character', default = "NULL", help = 'File path to covariates file'),  
   make_option('--outdir', type = 'character', help = 'The filepath for output directory', action = 'store'),
   make_option('--missingness_cov', type = 'character', default = FALSE, help = 'If TRUE use N missing proteins as a covariate. Default FALSE.')
 )
@@ -47,13 +47,16 @@ covs_fp <- opt$covs
 out_dir <- opt$outdir
 missingness_cov <- opt$missingness_cov
 
-sink(file.path(out_dir, "protein_score.log"))
+dir.create(out_dir, showWarnings = FALSE)
+#sink(file.path(out_dir, "protein_score.log"))
+
 
 print(paste0('protein file from : ', prot_filepath))
 print(paste0('List of proteins from : ', probe_filepath))
 print(paste0('ID column : ', id_col))
 print(paste0('Covariates from : ', opt$covs))
 print(paste0('Output to be saved in : ', out_dir))
+
 
 proteins <- readRDS(prot_filepath)
 prot_list <- readRDS(probe_filepath)
@@ -95,7 +98,10 @@ if(missingness_cov==TRUE){
 covs_ls <- colnames(all_covs)[colnames(all_covs) != id_col]
 covs_formu = paste0(covs_ls, collapse = " + ")
 
-if(!is.null(opt$binary_weights)){
+print(opt$binary_weights)
+if(opt$binary_weights!="NULL"){
+
+  print("This shouldn't print")
   
   ##### MDD weights #####
   binary_weights_filepath <- opt$binary_weights
@@ -129,7 +135,7 @@ if(!is.null(opt$binary_weights)){
   ggsave(file.path(out_dir, binary_weights_name, paste0(cohort, "_", binary_weights_name, "_protein_score_overall_density.png")), PS_density_binary, width = 8, height = 6, device='png', dpi=300)
 }
 
-if(!is.null(opt$continuous_weights)){
+if(opt$continuous_weights!="NULL"){
   ##### GHQ weights #####
   continuous_weights_filepath <- opt$continuous_weights
   continuous_weights <- readRDS(continuous_weights_filepath)
@@ -162,6 +168,10 @@ if(!is.null(opt$continuous_weights)){
   ggsave(file.path(out_dir, continuous_weights_name, paste0(cohort, "_", continuous_weights_name, "_protein_score_overall_density.png")), PS_density_continuous, width = 8, height = 6, device='png', dpi=300)
 }
 
+
+if(file.exists(file.path(out_dir, "descriptive_statistics.csv"))){
+  desc_stats <- read.csv(file.path(out_dir, "descriptive_statistics.csv"))[,-1]
+}else{
 desc_stats <- data.frame(
   weights = character(), 
   Phenotype = character(), 
@@ -173,9 +183,10 @@ desc_stats <- data.frame(
   AUC = numeric(), 
   Incremental_AUC = numeric()
   )
+}
 
 ##### Scores #####
-if(!is.null(opt$binary_pheno)){
+if(opt$binary_pheno!="NULL"){
 
   ##### Read in binary pheno ###############################################################################################################
 
@@ -200,7 +211,7 @@ if(!is.null(opt$binary_pheno)){
 
   aucR <- auc(binary_pheno_covs[complete.cases(binary_pheno_covs),]$pheno, binary_pheno_assoc_mod$linear.predictors)  ### AUC for reduced module
 
-  if(!is.null(opt$binary_weights)){
+  if(opt$binary_weights!="NULL"){
 
     dir.create(file.path(out_dir, binary_weights_name, binary_pheno_name))
     
@@ -277,7 +288,7 @@ if(!is.null(opt$binary_pheno)){
     desc_stats <- desc_stats |> rbind(binary_pheno_binary_weights_desc_stats)
   }
   
-  if(!is.null(opt$continuous_weights)){
+  if(opt$continuous_weights!="NULL"){
 
     dir.create(file.path(out_dir, continuous_weights_name, binary_pheno_name))
 
@@ -355,7 +366,7 @@ if(!is.null(opt$binary_pheno)){
   }
 }
 
-if(!is.null(opt$continuous_pheno)){
+if(opt$continuous_pheno!="NULL"){
 
   ##### Read in continuous pheno ###############################################################################################################
 
@@ -366,7 +377,7 @@ if(!is.null(opt$continuous_pheno)){
   colnames(continuous_pheno) <- c("id", "pheno")
   continuous_pheno <- continuous_pheno %>% filter(!is.na(pheno)) # remove missing values if there are any 
 
-  if(!is.null(opt$binary_weights)){
+  if(opt$binary_weights!="NULL"){
 
     dir.create(file.path(out_dir, binary_weights_name, continuous_pheno_name))
 
@@ -427,7 +438,7 @@ if(!is.null(opt$continuous_pheno)){
     desc_stats <- desc_stats |> rbind(continuous_pheno_binary_weights_desc_stats)
   }
   
-  if(!is.null(opt$continuous_weights)){
+  if(opt$continuous_weights!="NULL"){
 
     dir.create(file.path(out_dir, continuous_weights_name, continuous_pheno_name))
 
@@ -491,4 +502,4 @@ if(!is.null(opt$continuous_pheno)){
 
 write.csv(desc_stats, file.path(out_dir, "descriptive_statistics.csv"))
 
-sink()
+#sink()
