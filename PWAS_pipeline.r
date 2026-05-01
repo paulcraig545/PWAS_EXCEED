@@ -48,7 +48,7 @@ out_dir <- opt$outdir
 missingness_cov <- opt$missingness_cov
 
 dir.create(out_dir, showWarnings = FALSE)
-#sink(file.path(out_dir, "protein_score.log"))
+sink(file.path(out_dir, "protein_score.log"))
 
 
 print(paste0('protein file from : ', prot_filepath))
@@ -502,4 +502,4 @@ if(opt$continuous_pheno!="NULL"){
 
 write.csv(desc_stats, file.path(out_dir, "descriptive_statistics.csv"))
 
-#sink()
+sink()
