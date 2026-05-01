@@ -28,6 +28,7 @@ The R script pwas_pipeline.r will read :
 2) The protein_list_newProts.rds file which contains a list of probe Proteins provided by us. The R script will filter your cohort's Proteins to the Proteins from our training model and scale them
 
 Arguments:
+```
 --cohort : Cohort name, e.g 'GS' or 'EXCEED' \
 --proteins : The file path to the protein file (rds format) \
 --probe : The file path for the list of proteins from LASSO(non-zero coefficients) provided by us (protein_list_newProts.rds)  \
@@ -43,6 +44,7 @@ Arguments:
 --covs : The file path for the covariates \
 --missingness_cov : Whether or not the number of missing proteins should be included as a covariate in the models. Default FALSE \
 --outdir : Name of the directory where the outputs will be saved. The directory will be created by the script.
+```
 
 ## Running the pipeline
 
