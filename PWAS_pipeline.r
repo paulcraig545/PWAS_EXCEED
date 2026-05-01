@@ -31,7 +31,7 @@ option_list <- list(
   make_option('--continuous_pheno_name', type = 'character', default = "GHQ", help = 'Name of continuous phenotype'),
   make_option('--covs', type = 'character', default = "NULL", help = 'File path to covariates file'),  
   make_option('--outdir', type = 'character', help = 'The filepath for output directory', action = 'store'),
-  make_option('--missingness_cov', type = 'character', default = TRUE, help = 'If TRUE use N missing proteins as a covariate. Default TRUE.')
+  make_option('--missingness_cov', type = 'character', default = FALSE, help = 'If TRUE use N missing proteins as a covariate. Default False')
 )
 
 args = commandArgs(trailingOnly=TRUE)

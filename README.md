@@ -41,6 +41,7 @@ Arguments:
 --continuous_pheno : The file path for the outcome continuous phenotype \
 --continuous_pheno_name : Name of the outcome continuous phenotype (e.g. "PHQ") \
 --covs : The file path for the covariates \
+--missingness_cov : Whether or not the number of missing proteins should be included as a covariate in the models. Default FALSE \
 --outdir : Name of the directory where the outputs will be saved. The directory will be created by the script.
 
 ## Running the pipeline
@@ -65,6 +66,7 @@ Rscript PWAS_pipeline.r \
     --outdir "PWAS_pipeline_out/"
 ```
 
+
 Run the pipeline a second time, with the continuous weights arguments replaced with the weights trained on the total GHQ score which we have provided, to get the outputs for protein scores trained on GHQ total.  
 
 ```bash
@@ -81,4 +83,44 @@ Rscript PWAS_pipeline.r \
     --continuous_pheno_name ["continuous_pheno_name"] \
     --covs ["covariates_file.rds"] \
     --outdir "PWAS_pipeline_out/"
+```
+
+## Correcting for missing proteins
+
+If there are missing values in your protein data we would also like to see the results after having corrected for missing proteins. To get results after having corrected for missingness please run the two above commands again while changing the --missingness_cov flag to TRUE and changing the name of the output directory using --outdir. 
+
+```bash
+Rscript PWAS_pipeline.r \
+    --cohort "GS" \
+    --proteins ["proteins_file.rds"] \
+    --probe "protein_list_newProts.rds" \
+    --id_column "id" \
+    --binary_weights "GS_lasso_weights_MDD_newProts.rds" \
+    --binary_weights_name "MDD" \
+    --continuous_weights "GS_lasso_weights_likert_D_newProts.rds" \
+    --continuous_weights_name "GHQ_D" \
+    --binary_pheno ["binary_pheno_file.rds"] \
+    --binary_pheno_name ["binary_pheno_name"] \
+    --continuous_pheno ["continuous_pheno_file.rds"] \
+    --continuous_pheno_name ["continuous_pheno_name"] \
+    --covs ["covariates_file.rds"] \
+    --missingness_cov TRUE \
+    --outdir "PWAS_pipeline_missingness_cov_out/"
+```
+
+```bash
+Rscript PWAS_pipeline.r \
+    --cohort "GS" \
+    --proteins ["proteins_file.rds"] \
+    --probe "protein_list_newProts.rds" \
+    --id_column "id" \
+    --continuous_weights "GS_lasso_weights_likert_total_newProts.rds" \
+    --continuous_weights_name "GHQ_total" \
+    --binary_pheno ["binary_pheno_file.rds"] \
+    --binary_pheno_name ["binary_pheno_name"] \
+    --continuous_pheno ["continuous_pheno_file.rds"] \
+    --continuous_pheno_name ["continuous_pheno_name"] \
+    --covs ["covariates_file.rds"] \
+    --missingness_cov TRUE \
+    --outdir "PWAS_pipeline_missingness_cov_out/"
 ```
