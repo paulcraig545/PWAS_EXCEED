@@ -136,17 +136,6 @@ The PWAS/protein score analysis will proceed using the subset of LASSO proteins 
 
 This means that the resulting protein score is based on the available overlapping proteins rather than the full original LASSO protein set. This should be noted when interpreting replication results, especially if missing proteins had non-zero LASSO weights in the original model.
 
-## Recommended follow-up checks
-
-Before running the full pipeline, check the overlap manually:
-
-```r
-proteins <- readRDS("/scratch/gen1/cso11/GS_Proteomics/input/EXCEED_GS_replication.imputed.rds")
-prot_list <- readRDS("/scratch/gen1/cso11/GS_Proteomics/PWAS_files/protein_list_newProts.rds")
-
-available_prots <- intersect(colnames(proteins), prot_list)
-missing_prots <- setdiff(prot_list, colnames(proteins))
-
 length(prot_list)
 length(available_prots)
 missing_prots
