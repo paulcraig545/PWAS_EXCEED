@@ -61,9 +61,25 @@ print(paste0('Output to be saved in : ', out_dir))
 proteins <- readRDS(prot_filepath)
 prot_list <- readRDS(probe_filepath)
 
+# Keep only proteins that exist in the protein file
+available_prots <- intersect(colnames(proteins), prot_list)
+missing_prots <- setdiff(prot_list, colnames(proteins))
+
+print(paste0("Proteins requested: ", length(prot_list)))
+print(paste0("Proteins found in protein file: ", length(available_prots)))
+print(paste0("Proteins missing from protein file: ", length(missing_prots)))
+
+if (length(missing_prots) > 0) {
+  print("Missing proteins:")
+  print(missing_prots)
+}
+
+# Update prot_list so downstream code only uses available proteins
+prot_list <- available_prots
+
 ms_prot <- proteins %>%
     rename(id = all_of(id_col)) |>
-    select(id, intersect(names(proteins), prot_list))
+    select(id, all_of(prot_list))
 
 missingness <- data.frame(id = ms_prot$id, missing_prots = rowSums(is.na(ms_prot)))
 saveRDS(missingness, file.path(out_dir, "missing_proteins.rds"))
