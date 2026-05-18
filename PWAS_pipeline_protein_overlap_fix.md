@@ -129,16 +129,3 @@ Missing proteins:
 ```
 
 The exact numbers may differ depending on the protein file and protein list used.
-
-## Downstream impact
-
-The PWAS/protein score analysis will proceed using the subset of LASSO proteins available in the EXCEED protein file.
-
-This means that the resulting protein score is based on the available overlapping proteins rather than the full original LASSO protein set. This should be noted when interpreting replication results, especially if missing proteins had non-zero LASSO weights in the original model.
-
-length(prot_list)
-length(available_prots)
-missing_prots
-```
-
-This confirms how many proteins will be used before submitting the SLURM job.
