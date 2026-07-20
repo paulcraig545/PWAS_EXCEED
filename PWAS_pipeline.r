@@ -106,19 +106,19 @@ long_prot_std <- prot_std %>%
                values_to= "Protval")
 
 # Covariates formula
-all_covs <- readRDS(covs_fp)
+all_covs <- readRDS(covs_fp) %>%
+    rename(id = all_of(id_col))
 
 if(missingness_cov==TRUE){
   all_covs <- all_covs |> rename(id = all_of(id_col)) |> merge(missingness, by = "id")
 }
-covs_ls <- colnames(all_covs)[colnames(all_covs) != id_col]
+#covs_ls <- colnames(all_covs)[colnames(all_covs) != id_col]
+covs_ls <- colnames(all_covs)[colnames(all_covs) != "id"]
 covs_formu = paste0(covs_ls, collapse = " + ")
 
 print(opt$binary_weights)
 if(opt$binary_weights!="NULL"){
 
-  print("This shouldn't print")
-  
   ##### MDD weights #####
   binary_weights_filepath <- opt$binary_weights
   binary_weights <- readRDS(binary_weights_filepath)
@@ -126,6 +126,7 @@ if(opt$binary_weights!="NULL"){
   dir.create(file.path(out_dir, binary_weights_name))
   colnames(binary_weights) = c('proteins','weights')
 
+  
   long_prot_std_binary_weights <- merge(long_prot_std, binary_weights, by = 'proteins')
 
   ProtS_binary <- long_prot_std_binary_weights %>% group_by(id) %>%
@@ -213,7 +214,14 @@ if(opt$binary_pheno!="NULL"){
   colnames(binary_pheno) <- c("id", "pheno")
   binary_pheno <- binary_pheno %>% filter(!is.na(pheno)) # remove missing values if there are any 
 
-  binary_pheno_covs <- merge(binary_pheno, all_covs, by = id_col)
+  binary_pheno_covs <- merge(binary_pheno, all_covs, by = "id")
+  print(
+    paste0(table(binary_pheno_covs[complete.cases(binary_pheno_covs),]$pheno)["1"], 
+    " cases and ", 
+    paste0(table(binary_pheno_covs[complete.cases(binary_pheno_covs),]$pheno)["0"]), 
+    " controls in binary phenotype"
+    )
+  )
 
   binary_covs_formula <- as.formula(
       paste0("as.factor(pheno) ~ ", paste(covs_formu, collapse = " + "))
@@ -249,7 +257,7 @@ if(opt$binary_pheno!="NULL"){
     ggsave(file.path(out_dir, binary_weights_name, binary_pheno_name, paste0(cohort, "_", binary_weights_name, "_protein_score_case_control_distribution.png")), binary_pheno_binary_PS_dists, width = 8, height = 6, device='png', dpi=300)
     ggsave(file.path(out_dir, binary_weights_name, binary_pheno_name, paste0(cohort, "_", binary_weights_name, "_protein_score_case_control_density.png")), binary_pheno_binary_PS_densities, width = 8, height = 6, device='png', dpi=300)
 
-    binary_pheno_binary_PS_covs <- merge(binary_pheno_binary_PS, all_covs, by = id_col)
+    binary_pheno_binary_PS_covs <- merge(binary_pheno_binary_PS, all_covs, by = "id")
     
     binary_covs_PS_formula <- as.formula(
         paste0("as.factor(pheno) ~ ", paste(covs_formu, collapse = " + "), " + scale(binary_protS)")
@@ -326,7 +334,7 @@ if(opt$binary_pheno!="NULL"){
     ggsave(file.path(out_dir, continuous_weights_name, binary_pheno_name, paste0(cohort, "_", continuous_weights_name, "_protein_score_case_control_distribution.png")), binary_pheno_continuous_PS_dists, width = 8, height = 6, device='png', dpi=300)
     ggsave(file.path(out_dir, continuous_weights_name, binary_pheno_name, paste0(cohort, "_", continuous_weights_name, "_protein_score_case_control_density.png")), binary_pheno_continuous_PS_densities, width = 8, height = 6, device='png', dpi=300)
 
-    binary_pheno_continuous_PS_covs <- merge(binary_pheno_continuous_PS, all_covs, by = id_col)
+    binary_pheno_continuous_PS_covs <- merge(binary_pheno_continuous_PS, all_covs, by = "id")
     
     binary_covs_PS_formula <- as.formula(
         paste0("as.factor(pheno) ~ ", paste(covs_formu, collapse = " + "), " + scale(continuous_protS)")
@@ -409,14 +417,13 @@ if(opt$continuous_pheno!="NULL"){
     
     ggsave(file.path(out_dir, binary_weights_name, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "_scatter.png")), continuous_pheno_binary_PS_scatter, width = 8, height = 6, device='png', dpi=300)
   
-    continuous_pheno_binary_PS_covs <- merge(continuous_pheno_binary_PS, all_covs, by = id_col)
+    continuous_pheno_binary_PS_covs <- merge(continuous_pheno_binary_PS, all_covs, by = "id")
     
     binary_PS_formula <- as.formula(
         paste0("scale(pheno) ~ scale(binary_protS) + ", paste(covs_formu, collapse = " + "))
     )
 
     continuous_pheno_binary_PS_assoc_mod <- glm(binary_PS_formula, 
-                  #    family=binomial (link=logit), 
                     data = continuous_pheno_binary_PS_covs)
     
     continuous_pheno_binary_PS_assoc_coefs <- summary(continuous_pheno_binary_PS_assoc_mod)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
@@ -470,14 +477,13 @@ if(opt$continuous_pheno!="NULL"){
     
     ggsave(file.path(out_dir, continuous_weights_name, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_scatter.png")), continuous_pheno_continuous_PS_scatter, width = 8, height = 6, device='png', dpi=300)
   
-    continuous_pheno_continuous_PS_covs <- merge(continuous_pheno_continuous_PS, all_covs, by = id_col)
+    continuous_pheno_continuous_PS_covs <- merge(continuous_pheno_continuous_PS, all_covs, by = "id")
     
     continuous_PS_formula <- as.formula(
         paste0("scale(pheno) ~ scale(continuous_protS) + ", paste(covs_formu, collapse = " + "))
     )
 
     continuous_pheno_continuous_PS_assoc_mod <- glm(continuous_PS_formula, 
-                  #    family=binomial (link=logit), 
                     data = continuous_pheno_continuous_PS_covs)
     
     continuous_pheno_continuous_PS_assoc_coefs <- summary(continuous_pheno_continuous_PS_assoc_mod)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
