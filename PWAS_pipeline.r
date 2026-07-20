@@ -100,8 +100,6 @@ covs_formu = paste0(covs_ls, collapse = " + ")
 
 print(opt$binary_weights)
 if(opt$binary_weights!="NULL"){
-
-  print("This shouldn't print")
   
   ##### MDD weights #####
   binary_weights_filepath <- opt$binary_weights
