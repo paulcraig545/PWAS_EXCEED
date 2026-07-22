@@ -112,9 +112,16 @@ all_covs <- readRDS(covs_fp) %>%
 if(missingness_cov==TRUE){
   all_covs <- all_covs |> rename(id = all_of(id_col)) |> merge(missingness, by = "id")
 }
-#covs_ls <- colnames(all_covs)[colnames(all_covs) != id_col]
+
 covs_ls <- colnames(all_covs)[colnames(all_covs) != "id"]
 covs_formu = paste0(covs_ls, collapse = " + ")
+print(paste0('Covariates in full model: ', covs_formu))
+
+basic_covs <- all_covs |> select("id", colnames(all_covs)[which(colnames(all_covs) %in% c("age", "sex", "batch"))])
+
+covs_ls_basic <- colnames(basic_covs)[colnames(basic_covs) != "id"]
+covs_formu_basic = paste0(covs_ls_basic, collapse = " + ")
+print(paste0('Covariates in basic model: ', covs_formu_basic))
 
 print(opt$binary_weights)
 if(opt$binary_weights!="NULL"){
@@ -123,7 +130,7 @@ if(opt$binary_weights!="NULL"){
   binary_weights_filepath <- opt$binary_weights
   binary_weights <- readRDS(binary_weights_filepath)
   binary_weights_name <- opt$binary_weights_name
-  dir.create(file.path(out_dir, binary_weights_name))
+  dir.create(file.path(out_dir, paste0(binary_weights_name, "_weights")))
   colnames(binary_weights) = c('proteins','weights')
 
   
@@ -132,7 +139,7 @@ if(opt$binary_weights!="NULL"){
   ProtS_binary <- long_prot_std_binary_weights %>% group_by(id) %>%
     summarise(binary_protS = sum(weights*Protval, na.rm = T)) %>% as.data.frame()
 
-  binary_protS_outfile <- file.path(out_dir, binary_weights_name, paste0(cohort, "_binary_PS.rds"))
+  binary_protS_outfile <- file.path(out_dir, paste0(binary_weights_name, "_weights"), paste0(cohort, "_binary_PS.rds"))
   print(paste0('Saving the protein score to ', binary_protS_outfile))
   saveRDS(ProtS_binary, binary_protS_outfile)
 
@@ -148,8 +155,8 @@ if(opt$binary_weights!="NULL"){
     labs(x = 'Protein Profile Score', y = 'Count')+
     ggtitle(cohort)
 
-  ggsave(file.path(out_dir, binary_weights_name, paste0(cohort, "_", binary_weights_name, "_protein_score_overall_distribution.png")), PS_dist_binary, width = 8, height = 6, device='png', dpi=300)
-  ggsave(file.path(out_dir, binary_weights_name, paste0(cohort, "_", binary_weights_name, "_protein_score_overall_density.png")), PS_density_binary, width = 8, height = 6, device='png', dpi=300)
+  ggsave(file.path(out_dir, paste0(binary_weights_name, "_weights"), paste0(cohort, "_", binary_weights_name, "_protein_score_overall_distribution.png")), PS_dist_binary, width = 8, height = 6, device='png', dpi=300)
+  ggsave(file.path(out_dir, paste0(binary_weights_name, "_weights"), paste0(cohort, "_", binary_weights_name, "_protein_score_overall_density.png")), PS_density_binary, width = 8, height = 6, device='png', dpi=300)
 }
 
 if(opt$continuous_weights!="NULL"){
@@ -157,7 +164,7 @@ if(opt$continuous_weights!="NULL"){
   continuous_weights_filepath <- opt$continuous_weights
   continuous_weights <- readRDS(continuous_weights_filepath)
   continuous_weights_name <- opt$continuous_weights_name
-  dir.create(file.path(out_dir, continuous_weights_name))
+  dir.create(file.path(out_dir, paste0(continuous_weights_name, "_weights")))
   colnames(continuous_weights) = c('proteins','weights')
 
   long_prot_std_continuous_weights <- merge(long_prot_std, continuous_weights, by = 'proteins')
@@ -165,7 +172,7 @@ if(opt$continuous_weights!="NULL"){
   ProtS_continuous <- long_prot_std_continuous_weights %>% group_by(id) %>%
     summarise(continuous_protS = sum(weights*Protval, na.rm = T)) %>% as.data.frame()
 
-  continuous_protS_outfile <- file.path(out_dir, continuous_weights_name, paste0(cohort, "_continuous_PS.rds"))
+  continuous_protS_outfile <- file.path(out_dir, paste0(continuous_weights_name, "_weights"), paste0(cohort, "_continuous_PS.rds"))
   print(paste0('Saving the protein score to ', continuous_protS_outfile))
   saveRDS(ProtS_continuous, continuous_protS_outfile)
 
@@ -181,8 +188,8 @@ if(opt$continuous_weights!="NULL"){
     labs(x = 'Protein Profile Score', y = 'Count')+
     ggtitle(cohort)
 
-  ggsave(file.path(out_dir, continuous_weights_name, paste0(cohort, "_", continuous_weights_name, "_protein_score_overall_distribution.png")), PS_dist_continuous, width = 8, height = 6, device='png', dpi=300)
-  ggsave(file.path(out_dir, continuous_weights_name, paste0(cohort, "_", continuous_weights_name, "_protein_score_overall_density.png")), PS_density_continuous, width = 8, height = 6, device='png', dpi=300)
+  ggsave(file.path(out_dir, paste0(continuous_weights_name, "_weights"), paste0(cohort, "_", continuous_weights_name, "_protein_score_overall_distribution.png")), PS_dist_continuous, width = 8, height = 6, device='png', dpi=300)
+  ggsave(file.path(out_dir, paste0(continuous_weights_name, "_weights"), paste0(cohort, "_", continuous_weights_name, "_protein_score_overall_density.png")), PS_density_continuous, width = 8, height = 6, device='png', dpi=300)
 }
 
 
@@ -190,6 +197,7 @@ if(file.exists(file.path(out_dir, "descriptive_statistics.csv"))){
   desc_stats <- read.csv(file.path(out_dir, "descriptive_statistics.csv"))[,-1]
 }else{
 desc_stats <- data.frame(
+  model = character(),
   weights = character(), 
   Phenotype = character(), 
   beta = numeric(), 
@@ -210,6 +218,7 @@ if(opt$binary_pheno!="NULL"){
   binary_pheno_filepath <- opt$binary_pheno
   binary_pheno <- readRDS(binary_pheno_filepath)
   binary_pheno_name <- opt$binary_pheno_name
+  dir.create(file.path(out_dir, binary_pheno_name))
   
   colnames(binary_pheno) <- c("id", "pheno")
   binary_pheno <- binary_pheno %>% filter(!is.na(pheno)) # remove missing values if there are any 
@@ -224,7 +233,7 @@ if(opt$binary_pheno!="NULL"){
   )
 
   binary_covs_formula <- as.formula(
-      paste0("as.factor(pheno) ~ ", paste(covs_formu, collapse = " + "))
+      paste0("as.factor(pheno) ~ ", covs_formu)
       )
 
   binary_pheno_assoc_mod <- glm(
@@ -232,12 +241,29 @@ if(opt$binary_pheno!="NULL"){
       family=binomial (link=logit), 
       data = binary_pheno_covs
       )
+  saveRDS(binary_pheno_assoc_mod, file.path(out_dir, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_assoc_mod.rds")))
 
   aucR <- auc(binary_pheno_covs[complete.cases(binary_pheno_covs),]$pheno, binary_pheno_assoc_mod$linear.predictors)  ### AUC for reduced module
 
+  binary_pheno_covs_basic <- merge(binary_pheno, basic_covs, by = "id")
+
+  binary_covs_formula_basic <- as.formula(
+      paste0("as.factor(pheno) ~ ", covs_formu_basic)
+      )
+
+  binary_pheno_assoc_mod_basic <- glm(
+      binary_covs_formula_basic, 
+      family=binomial (link=logit), 
+      data = binary_pheno_covs_basic
+      )
+  saveRDS(binary_pheno_assoc_mod_basic, file.path(out_dir, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_assoc_mod_basic.rds")))
+
+  aucR_basic <- auc(binary_pheno_covs_basic[complete.cases(binary_pheno_covs_basic),]$pheno, binary_pheno_assoc_mod_basic$linear.predictors)  ### AUC for reduced module
+
   if(opt$binary_weights!="NULL"){
 
-    dir.create(file.path(out_dir, binary_weights_name, binary_pheno_name))
+    # dir.create(file.path(out_dir, binary_weights_name, binary_pheno_name))
+    dir.create(file.path(out_dir, binary_pheno_name, binary_weights_name))
     
     ##### Binary Protein Score #####
     
@@ -254,13 +280,13 @@ if(opt$binary_pheno!="NULL"){
         labs(title="Protein score distribution per pheno",x="Protein Score", y = "Density", color="pheno") +
         theme_classic()
     
-    ggsave(file.path(out_dir, binary_weights_name, binary_pheno_name, paste0(cohort, "_", binary_weights_name, "_protein_score_case_control_distribution.png")), binary_pheno_binary_PS_dists, width = 8, height = 6, device='png', dpi=300)
-    ggsave(file.path(out_dir, binary_weights_name, binary_pheno_name, paste0(cohort, "_", binary_weights_name, "_protein_score_case_control_density.png")), binary_pheno_binary_PS_densities, width = 8, height = 6, device='png', dpi=300)
+    ggsave(file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_weights_name, "_protein_score_case_control_distribution.png")), binary_pheno_binary_PS_dists, width = 8, height = 6, device='png', dpi=300)
+    ggsave(file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_weights_name, "_protein_score_case_control_density.png")), binary_pheno_binary_PS_densities, width = 8, height = 6, device='png', dpi=300)
 
     binary_pheno_binary_PS_covs <- merge(binary_pheno_binary_PS, all_covs, by = "id")
     
     binary_covs_PS_formula <- as.formula(
-        paste0("as.factor(pheno) ~ ", paste(covs_formu, collapse = " + "), " + scale(binary_protS)")
+        paste0("as.factor(pheno) ~ ", covs_formu, " + scale(binary_protS)")
         )    
     
     binary_pheno_binary_PS_assoc_mod <- glm(
@@ -268,11 +294,12 @@ if(opt$binary_pheno!="NULL"){
         family=binomial (link=logit), 
         data = binary_pheno_binary_PS_covs
         )
+    saveRDS(binary_pheno_binary_PS_assoc_mod, file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_assoc_mod.rds")))
     
     binary_pheno_binary_PS_assoc_coefs <- summary(binary_pheno_binary_PS_assoc_mod)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
     
     # save the coefficients 
-    binary_pheno_binary_PS_assoc_coefs_outfile <- file.path(out_dir, binary_weights_name, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_PS_assoc_coefs.rds"))
+    binary_pheno_binary_PS_assoc_coefs_outfile <- file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_PS_assoc_coefs.rds"))
     saveRDS(binary_pheno_binary_PS_assoc_coefs, binary_pheno_binary_PS_assoc_coefs_outfile)
     
     aucF <- auc(binary_pheno_binary_PS_covs[complete.cases(binary_pheno_binary_PS_covs),]$pheno, binary_pheno_binary_PS_assoc_mod$linear.predictors)  ### AUC for full module
@@ -282,22 +309,23 @@ if(opt$binary_pheno!="NULL"){
 
     binary_pheno_binary_PS_predicted_probs <- predict(binary_pheno_binary_PS_assoc_mod, type = 'response')
     roc_curve <- roc(binary_pheno_binary_PS_covs[complete.cases(binary_pheno_binary_PS_covs),]$pheno, binary_pheno_binary_PS_predicted_probs)    
-    
+
     # save ROC curve object for plotting all cohorts together
-    saveRDS(roc_curve, file.path(out_dir, binary_weights_name, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_roc_curve.rds")))
-    
+    saveRDS(roc_curve, file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_roc_curve.rds")))
+
     # ROC Graph 
-    cairo_pdf(file = file.path(out_dir, binary_weights_name, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_binary_pheno_binary_PS_assoc_ROC_curve.pdf")), width = 8, height = 6)
+    cairo_pdf(file = file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_binary_pheno_binary_PS_assoc_ROC_curve.pdf")), width = 8, height = 6)
     plot.roc(roc_curve, col = "blue", lwd =2, main = paste0('ROC Curve: ', cohort, "_", binary_pheno_name, "_", binary_weights_name))
     dev.off()
-    
+
     pr_curve <- pr.curve(binary_pheno_binary_PS_covs$pheno, binary_pheno_binary_PS_predicted_probs, curve = T)
     
-    cairo_pdf(file = file.path(out_dir, binary_weights_name, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_PS_assoc_precision_recall.pdf")), width = 8, height = 6)
+    cairo_pdf(file = file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_PS_assoc_precision_recall.pdf")), width = 8, height = 6)
     plot(pr_curve, col = "red", main= paste0('Precision Recall Curve: ', cohort, "_", binary_pheno_name, "_", binary_weights_name))
     dev.off()
 
     binary_pheno_binary_weights_desc_stats <- data.frame(
+      model = "full",
       weights = binary_weights_name,
       Phenotype = binary_pheno_name,
       beta = summary(binary_pheno_binary_PS_assoc_mod)$coefficients["scale(binary_protS)", "Estimate"],
@@ -310,11 +338,68 @@ if(opt$binary_pheno!="NULL"){
       )
 
     desc_stats <- desc_stats |> rbind(binary_pheno_binary_weights_desc_stats)
+
+    binary_pheno_binary_PS_covs_basic <- merge(binary_pheno_binary_PS, basic_covs, by = "id")
+    
+    binary_covs_PS_formula_basic <- as.formula(
+        paste0("as.factor(pheno) ~ ", covs_formu_basic, " + scale(binary_protS)")
+        )    
+    
+    binary_pheno_binary_PS_assoc_mod_basic <- glm(
+        binary_covs_PS_formula_basic, 
+        family=binomial (link=logit), 
+        data = binary_pheno_binary_PS_covs_basic
+        )
+    saveRDS(binary_pheno_binary_PS_assoc_mod_basic, file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_assoc_mod_basic.rds")))
+    
+    binary_pheno_binary_PS_assoc_coefs_basic <- summary(binary_pheno_binary_PS_assoc_mod_basic)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
+    
+    # save the coefficients 
+    binary_pheno_binary_PS_assoc_coefs_basic_outfile <- file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_PS_assoc_coefs_basic.rds"))
+    saveRDS(binary_pheno_binary_PS_assoc_coefs_basic, binary_pheno_binary_PS_assoc_coefs_basic_outfile)
+    
+    aucF_basic <- auc(binary_pheno_binary_PS_covs_basic[complete.cases(binary_pheno_binary_PS_covs_basic),]$pheno, binary_pheno_binary_PS_assoc_mod_basic$linear.predictors)  ### AUC for full module
+
+    print(paste0("AUC value for binary phenotype binary weights (basic model): ", aucF_basic))
+    print(paste0("Incremental AUC value for binary phenotype binary weights basic model): ", aucF_basic - aucR_basic))
+
+    binary_pheno_binary_PS_predicted_probs_basic <- predict(binary_pheno_binary_PS_assoc_mod_basic, type = 'response')
+    roc_curve_basic <- roc(binary_pheno_binary_PS_covs_basic[complete.cases(binary_pheno_binary_PS_covs_basic),]$pheno, binary_pheno_binary_PS_predicted_probs_basic)    
+    
+    # save ROC curve object for plotting all cohorts together
+    saveRDS(roc_curve_basic, file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_roc_curve_basic.rds")))
+    
+    # ROC Graph 
+    cairo_pdf(file = file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_binary_pheno_binary_PS_assoc_ROC_curve_basic.pdf")), width = 8, height = 6)
+    plot.roc(roc_curve_basic, col = "blue", lwd =2, main = paste0('ROC Curve: ', cohort, "_", binary_pheno_name, "_", binary_weights_name))
+    dev.off()
+    
+    pr_curve_basic <- pr.curve(binary_pheno_binary_PS_covs_basic$pheno, binary_pheno_binary_PS_predicted_probs_basic, curve = T)
+
+    cairo_pdf(file = file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_PS_assoc_precision_recall_basic.pdf")), width = 8, height = 6)
+    plot(pr_curve_basic, col = "red", main= paste0('Precision Recall Curve: ', cohort, "_", binary_pheno_name, "_", binary_weights_name))
+    dev.off()
+
+    binary_pheno_binary_weights_desc_stats_basic <- data.frame(
+      model = "basic",
+      weights = binary_weights_name,
+      Phenotype = binary_pheno_name,
+      beta = summary(binary_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Estimate"],
+      std = summary(binary_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Std. Error"],
+      p = summary(binary_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Pr(>|z|)"],
+      R2 = NA,
+      Incremental_R2 = NA,
+      AUC = aucF_basic,
+      Incremental_AUC = aucF_basic - aucR_basic
+      )
+
+    desc_stats <- desc_stats |> rbind(binary_pheno_binary_weights_desc_stats_basic)
+
   }
   
   if(opt$continuous_weights!="NULL"){
 
-    dir.create(file.path(out_dir, continuous_weights_name, binary_pheno_name))
+    dir.create(file.path(out_dir, binary_pheno_name, continuous_weights_name))
 
     ##### Binary Protein Score #####
     
@@ -331,13 +416,13 @@ if(opt$binary_pheno!="NULL"){
         labs(title="Protein score distribution per pheno",x="Protein Score", y = "Density", color="pheno") +
         theme_classic()
     
-    ggsave(file.path(out_dir, continuous_weights_name, binary_pheno_name, paste0(cohort, "_", continuous_weights_name, "_protein_score_case_control_distribution.png")), binary_pheno_continuous_PS_dists, width = 8, height = 6, device='png', dpi=300)
-    ggsave(file.path(out_dir, continuous_weights_name, binary_pheno_name, paste0(cohort, "_", continuous_weights_name, "_protein_score_case_control_density.png")), binary_pheno_continuous_PS_densities, width = 8, height = 6, device='png', dpi=300)
+    ggsave(file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", continuous_weights_name, "_protein_score_case_control_distribution.png")), binary_pheno_continuous_PS_dists, width = 8, height = 6, device='png', dpi=300)
+    ggsave(file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", continuous_weights_name, "_protein_score_case_control_density.png")), binary_pheno_continuous_PS_densities, width = 8, height = 6, device='png', dpi=300)
 
     binary_pheno_continuous_PS_covs <- merge(binary_pheno_continuous_PS, all_covs, by = "id")
     
     binary_covs_PS_formula <- as.formula(
-        paste0("as.factor(pheno) ~ ", paste(covs_formu, collapse = " + "), " + scale(continuous_protS)")
+        paste0("as.factor(pheno) ~ ", covs_formu, " + scale(continuous_protS)")
         )
     
     binary_pheno_continuous_PS_assoc_mod <- glm(
@@ -345,11 +430,12 @@ if(opt$binary_pheno!="NULL"){
         family=binomial (link=logit), 
         data = binary_pheno_continuous_PS_covs
         )
+    saveRDS(binary_pheno_continuous_PS_assoc_mod, file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_assoc_mod.rds")))
     
     binary_pheno_continuous_PS_assoc_coefs <- summary(binary_pheno_continuous_PS_assoc_mod)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
     
     # save the coefficients 
-    binary_pheno_continuous_PS_assoc_coefs_outfile <- file.path(out_dir, continuous_weights_name, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_PS_assoc_coefs.rds"))
+    binary_pheno_continuous_PS_assoc_coefs_outfile <- file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_PS_assoc_coefs.rds"))
     saveRDS(binary_pheno_continuous_PS_assoc_coefs, binary_pheno_continuous_PS_assoc_coefs_outfile)
     
     aucF <- auc(binary_pheno_continuous_PS_covs[complete.cases(binary_pheno_continuous_PS_covs),]$pheno, binary_pheno_continuous_PS_assoc_mod$linear.predictors)  ### AUC for full module
@@ -361,20 +447,21 @@ if(opt$binary_pheno!="NULL"){
     roc_curve <- roc(binary_pheno_continuous_PS_covs[complete.cases(binary_pheno_continuous_PS_covs),]$pheno, binary_pheno_continuous_PS_predicted_probs)    
     
     # save ROC curve object for plotting all cohorts together
-    saveRDS(roc_curve, file.path(out_dir, continuous_weights_name, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_roc_curve.rds")))
+    saveRDS(roc_curve, file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_roc_curve.rds")))
     
     # ROC Graph 
-    cairo_pdf(file = file.path(out_dir, continuous_weights_name, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_binary_pheno_continuous_PS_assoc_ROC_curve.pdf")), width = 8, height = 6)
+    cairo_pdf(file = file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_binary_pheno_continuous_PS_assoc_ROC_curve.pdf")), width = 8, height = 6)
     plot.roc(roc_curve, col = "blue", lwd =2, main = paste0('ROC Curve: ', cohort, "_", binary_pheno_name, "_", continuous_weights_name))
     dev.off()
     
     pr_curve <- pr.curve(binary_pheno_continuous_PS_covs$pheno, binary_pheno_continuous_PS_predicted_probs, curve = T)
     
-    cairo_pdf(file = file.path(out_dir, continuous_weights_name, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_PS_assoc_precision_recall.pdf")), width = 8, height = 6)
+    cairo_pdf(file = file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_PS_assoc_precision_recall.pdf")), width = 8, height = 6)
     plot(pr_curve, col = "red", main= paste0('Precision Recall Curve: ', cohort, "_", binary_pheno_name, "_", continuous_weights_name))
     dev.off()
 
     binary_pheno_continuous_weights_desc_stats <- data.frame(
+      model = "full",
       weights = continuous_weights_name,
       Phenotype = binary_pheno_name,
       beta = summary(binary_pheno_continuous_PS_assoc_mod)$coefficients["scale(continuous_protS)", "Estimate"],
@@ -387,6 +474,62 @@ if(opt$binary_pheno!="NULL"){
       )
 
     desc_stats <- desc_stats |> rbind(binary_pheno_continuous_weights_desc_stats)
+
+    binary_pheno_continuous_PS_covs_basic <- merge(binary_pheno_continuous_PS, basic_covs, by = "id")
+    
+    binary_covs_PS_formula_basic <- as.formula(
+        paste0("as.factor(pheno) ~ ", covs_formu_basic, " + scale(continuous_protS)")
+        )
+    
+    binary_pheno_continuous_PS_assoc_mod_basic <- glm(
+        binary_covs_PS_formula_basic, 
+        family=binomial (link=logit), 
+        data = binary_pheno_continuous_PS_covs_basic
+        )
+    saveRDS(binary_pheno_continuous_PS_assoc_mod_basic, file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_assoc_mod_basic.rds")))
+    
+    binary_pheno_continuous_PS_assoc_coefs_basic <- summary(binary_pheno_continuous_PS_assoc_mod_basic)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
+    
+    # save the coefficients 
+    binary_pheno_continuous_PS_assoc_coefs_basic_outfile <- file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_PS_assoc_coefs_basic.rds"))
+    saveRDS(binary_pheno_continuous_PS_assoc_coefs_basic, binary_pheno_continuous_PS_assoc_coefs_basic_outfile)
+    
+    aucF_basic <- auc(binary_pheno_continuous_PS_covs_basic[complete.cases(binary_pheno_continuous_PS_covs_basic),]$pheno, binary_pheno_continuous_PS_assoc_mod_basic$linear.predictors)  ### AUC for full module
+
+    print(paste0("AUC value for binary phenotype continuous weights (basic): ", aucF_basic))
+    print(paste0("Incremental AUC value for binary phenotype continuous weights (basic): ", aucF_basic - aucR))
+
+    binary_pheno_continuous_PS_predicted_probs_basic <- predict(binary_pheno_continuous_PS_assoc_mod_basic, type = 'response')
+    roc_curve_basic <- roc(binary_pheno_continuous_PS_covs_basic[complete.cases(binary_pheno_continuous_PS_covs_basic),]$pheno, binary_pheno_continuous_PS_predicted_probs_basic)    
+    
+    # save ROC curve object for plotting all cohorts together
+    saveRDS(roc_curve_basic, file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_roc_curve_basic.rds")))
+    
+    # ROC Graph 
+    cairo_pdf(file = file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_binary_pheno_continuous_PS_assoc_ROC_curve_basic.pdf")), width = 8, height = 6)
+    plot.roc(roc_curve_basic, col = "blue", lwd =2, main = paste0('ROC Curve: ', cohort, "_", binary_pheno_name, "_", continuous_weights_name))
+    dev.off()
+    
+    pr_curve_basic <- pr.curve(binary_pheno_continuous_PS_covs_basic$pheno, binary_pheno_continuous_PS_predicted_probs_basic, curve = T)
+    
+    cairo_pdf(file = file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_PS_assoc_precision_recall_basic.pdf")), width = 8, height = 6)
+    plot(pr_curve_basic, col = "red", main= paste0('Precision Recall Curve: ', cohort, "_", binary_pheno_name, "_", continuous_weights_name))
+    dev.off()
+
+    binary_pheno_continuous_weights_desc_stats_basic <- data.frame(
+      model = "basic",
+      weights = continuous_weights_name,
+      Phenotype = binary_pheno_name,
+      beta = summary(binary_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Estimate"],
+      std = summary(binary_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Std. Error"],
+      p = summary(binary_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Pr(>|z|)"],
+      R2 = NA,
+      Incremental_R2 = NA,
+      AUC = aucF_basic,
+      Incremental_AUC = aucF_basic - aucR
+      )
+
+    desc_stats <- desc_stats |> rbind(binary_pheno_continuous_weights_desc_stats_basic)
   }
 }
 
@@ -397,13 +540,38 @@ if(opt$continuous_pheno!="NULL"){
   continuous_pheno_filepath <- opt$continuous_pheno
   continuous_pheno <- readRDS(continuous_pheno_filepath)
   continuous_pheno_name <- opt$continuous_pheno_name
+  dir.create(file.path(out_dir, continuous_pheno_name))
   
   colnames(continuous_pheno) <- c("id", "pheno")
   continuous_pheno <- continuous_pheno %>% filter(!is.na(pheno)) # remove missing values if there are any 
 
+  continuous_pheno_covs <- merge(continuous_pheno, all_covs, by = "id")
+
+  continuous_covs_formula <- as.formula(
+      paste0("scale(pheno) ~ ", covs_formu)
+      )
+
+  continuous_pheno_assoc_mod <- lm(
+      continuous_covs_formula, 
+      data = continuous_pheno_covs
+      )
+  saveRDS(continuous_pheno_assoc_mod, file.path(out_dir, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_assoc_mod.rds")))
+
+  continuous_pheno_covs_basic <- merge(continuous_pheno, basic_covs, by = "id")
+
+  continuous_covs_formula_basic <- as.formula(
+      paste0("scale(pheno) ~ ", covs_formu_basic)
+      )
+
+  continuous_pheno_assoc_mod_basic <- lm(
+      continuous_covs_formula_basic, 
+      data = continuous_pheno_covs_basic
+      )
+  saveRDS(continuous_pheno_assoc_mod_basic, file.path(out_dir, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_assoc_mod_basic.rds")))
+
   if(opt$binary_weights!="NULL"){
 
-    dir.create(file.path(out_dir, binary_weights_name, continuous_pheno_name))
+    dir.create(file.path(out_dir, continuous_pheno_name, binary_weights_name))
 
     ##### Binary Protein Score #####
     
@@ -415,30 +583,30 @@ if(opt$continuous_pheno!="NULL"){
         labs(title="Protein score per continuous phenotype", x="Continuous phenotype", y="Protein Score") +
         geom_smooth(method = "lm", se = TRUE)
     
-    ggsave(file.path(out_dir, binary_weights_name, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "_scatter.png")), continuous_pheno_binary_PS_scatter, width = 8, height = 6, device='png', dpi=300)
+    ggsave(file.path(out_dir, continuous_pheno_name, binary_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "_scatter.png")), continuous_pheno_binary_PS_scatter, width = 8, height = 6, device='png', dpi=300)
   
     continuous_pheno_binary_PS_covs <- merge(continuous_pheno_binary_PS, all_covs, by = "id")
     
     binary_PS_formula <- as.formula(
-        paste0("scale(pheno) ~ scale(binary_protS) + ", paste(covs_formu, collapse = " + "))
+        paste0("scale(pheno) ~ scale(binary_protS) + ", covs_formu)
     )
 
-    continuous_pheno_binary_PS_assoc_mod <- glm(binary_PS_formula, 
+    continuous_pheno_binary_PS_assoc_mod <- lm(binary_PS_formula, 
                     data = continuous_pheno_binary_PS_covs)
     
     continuous_pheno_binary_PS_assoc_coefs <- summary(continuous_pheno_binary_PS_assoc_mod)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
     
     # save the coefficients 
-    continuous_pheno_binary_PS_assoc_coefs_outfile <- file.path(out_dir, binary_weights_name, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "_PS_assoc_coefs.rds"))
+    continuous_pheno_binary_PS_assoc_coefs_outfile <- file.path(out_dir, continuous_pheno_name, binary_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "_PS_assoc_coefs.rds"))
     saveRDS(continuous_pheno_binary_PS_assoc_coefs, continuous_pheno_binary_PS_assoc_coefs_outfile)
 
-    rsq_value <- summary(lm(binary_PS_formula, data = continuous_pheno_binary_PS_covs))$r.squared
-    incr_rsq_value <- summary(lm(binary_PS_formula, data = continuous_pheno_binary_PS_covs))$r.squared - summary(lm(as.formula(paste0("scale(pheno) ~ ", paste(covs_formu, collapse = " + "))), data = continuous_pheno_binary_PS_covs))$r.squared
+    rsq_value <- summary(continuous_pheno_binary_PS_assoc_mod)$r.squared
+    incr_rsq_value <- summary(continuous_pheno_binary_PS_assoc_mod)$r.squared - summary(continuous_pheno_assoc_mod)$r.squared
 
     print(paste0("R squared value for continuous phenotype binary weights: ", rsq_value))
     print(paste0("Incremental R squared value for continuous phenotype binary weights: ", incr_rsq_value))
 
-    png(filename=file.path(out_dir, binary_weights_name, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "_PS_scatter_.rds")))
+    png(filename=file.path(out_dir, continuous_pheno_name, binary_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "_PS_scatter_.rds")))
       ggplot(continuous_pheno_binary_PS, aes(pheno, binary_protS))+
         geom_jitter() +
         theme_classic()+
@@ -447,6 +615,7 @@ if(opt$continuous_pheno!="NULL"){
     dev.off()
 
     continuous_pheno_binary_weights_desc_stats <- data.frame(
+      model = "full",
       weights = binary_weights_name,
       Phenotype = continuous_pheno_name,
       beta = summary(continuous_pheno_binary_PS_assoc_mod)$coefficients["scale(binary_protS)", "Estimate"],
@@ -459,11 +628,48 @@ if(opt$continuous_pheno!="NULL"){
       )
     
     desc_stats <- desc_stats |> rbind(continuous_pheno_binary_weights_desc_stats)
+
+    continuous_pheno_binary_PS_covs_basic <- merge(continuous_pheno_binary_PS, basic_covs, by = "id")
+    
+    binary_PS_formula_basic <- as.formula(
+        paste0("scale(pheno) ~ scale(binary_protS) + ", covs_formu_basic)
+    )
+
+    continuous_pheno_binary_PS_assoc_mod_basic <- lm(binary_PS_formula_basic, 
+                    data = continuous_pheno_binary_PS_covs_basic)
+    
+    continuous_pheno_binary_PS_assoc_coefs_basic <- summary(continuous_pheno_binary_PS_assoc_mod_basic)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
+    
+    # save the coefficients 
+    continuous_pheno_binary_PS_assoc_coefs_basic_outfile <- file.path(out_dir, continuous_pheno_name, binary_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "_PS_assoc_coefs_basic.rds"))
+    saveRDS(continuous_pheno_binary_PS_assoc_coefs_basic, continuous_pheno_binary_PS_assoc_coefs_basic_outfile)
+
+    rsq_value_basic <- summary(continuous_pheno_binary_PS_assoc_mod_basic)$r.squared
+    incr_rsq_value_basic <- summary(continuous_pheno_binary_PS_assoc_mod_basic)$r.squared - summary(continuous_pheno_assoc_mod)$r.squared
+
+    print(paste0("R squared value for continuous phenotype binary weights (basic): ", rsq_value_basic))
+    print(paste0("Incremental R squared value for continuous phenotype binary weights (basic): ", incr_rsq_value_basic))
+
+    continuous_pheno_binary_weights_desc_stats_basic <- data.frame(
+      model = "basic",
+      weights = binary_weights_name,
+      Phenotype = continuous_pheno_name,
+      beta = summary(continuous_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Estimate"],
+      std = summary(continuous_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Std. Error"],
+      p = summary(continuous_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Pr(>|t|)"],
+      R2 = rsq_value_basic,
+      Incremental_R2 = incr_rsq_value_basic,
+      AUC = NA,
+      Incremental_AUC = NA
+      )
+    
+    desc_stats <- desc_stats |> rbind(continuous_pheno_binary_weights_desc_stats_basic)
+
   }
   
   if(opt$continuous_weights!="NULL"){
 
-    dir.create(file.path(out_dir, continuous_weights_name, continuous_pheno_name))
+    dir.create(file.path(out_dir, continuous_pheno_name, continuous_weights_name))
 
     ##### Continuous Protein Score #####
     
@@ -475,30 +681,30 @@ if(opt$continuous_pheno!="NULL"){
         labs(title="Protein score per continuous phenotype", x="Continuous phenotype", y="Protein Score") +
         geom_smooth(method = "lm", se = TRUE)
     
-    ggsave(file.path(out_dir, continuous_weights_name, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_scatter.png")), continuous_pheno_continuous_PS_scatter, width = 8, height = 6, device='png', dpi=300)
+    ggsave(file.path(out_dir, continuous_pheno_name, continuous_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_scatter.png")), continuous_pheno_continuous_PS_scatter, width = 8, height = 6, device='png', dpi=300)
   
     continuous_pheno_continuous_PS_covs <- merge(continuous_pheno_continuous_PS, all_covs, by = "id")
     
     continuous_PS_formula <- as.formula(
-        paste0("scale(pheno) ~ scale(continuous_protS) + ", paste(covs_formu, collapse = " + "))
+        paste0("scale(pheno) ~ scale(continuous_protS) + ", covs_formu)
     )
 
-    continuous_pheno_continuous_PS_assoc_mod <- glm(continuous_PS_formula, 
+    continuous_pheno_continuous_PS_assoc_mod <- lm(continuous_PS_formula, 
                     data = continuous_pheno_continuous_PS_covs)
     
     continuous_pheno_continuous_PS_assoc_coefs <- summary(continuous_pheno_continuous_PS_assoc_mod)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
     
     # save the coefficients 
-    continuous_pheno_continuous_PS_assoc_coefs_outfile <- file.path(out_dir, continuous_weights_name, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_PS_assoc_coefs.rds"))
+    continuous_pheno_continuous_PS_assoc_coefs_outfile <- file.path(out_dir, continuous_pheno_name, continuous_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_PS_assoc_coefs.rds"))
     saveRDS(continuous_pheno_continuous_PS_assoc_coefs, continuous_pheno_continuous_PS_assoc_coefs_outfile)
 
-    rsq_value <- summary(lm(continuous_PS_formula, data = continuous_pheno_continuous_PS_covs))$r.squared
-    incr_rsq_value <- summary(lm(continuous_PS_formula, data = continuous_pheno_continuous_PS_covs))$r.squared - summary(lm(as.formula(paste0("scale(pheno) ~ ", paste(covs_formu, collapse = " + "))), data = continuous_pheno_continuous_PS_covs))$r.squared
+    rsq_value <- summary(continuous_pheno_continuous_PS_assoc_mod)$r.squared
+    incr_rsq_value <- summary(continuous_pheno_continuous_PS_assoc_mod)$r.squared - summary(continuous_pheno_assoc_mod)$r.squared
 
     print(paste0("R squared value for continuous phenotype continuous weights: ", rsq_value))
     print(paste0("Incremental R squared value for continuous phenotype continuous weights: ", incr_rsq_value))
 
-    png(filename=file.path(out_dir, continuous_weights_name, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_PS_scatter_.rds")))
+    png(filename=file.path(out_dir, continuous_pheno_name, continuous_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_PS_scatter_.rds")))
       ggplot(continuous_pheno_continuous_PS, aes(pheno, continuous_protS))+
         geom_jitter() +
         theme_classic()+
@@ -507,6 +713,7 @@ if(opt$continuous_pheno!="NULL"){
     dev.off()
 
     continuous_pheno_continuous_weights_desc_stats <- data.frame(
+      model = "full",
       weights = continuous_weights_name,
       Phenotype = continuous_pheno_name,
       beta = summary(continuous_pheno_continuous_PS_assoc_mod)$coefficients["scale(continuous_protS)", "Estimate"],
@@ -519,6 +726,42 @@ if(opt$continuous_pheno!="NULL"){
       )
 
     desc_stats <- desc_stats |> rbind(continuous_pheno_continuous_weights_desc_stats)
+
+    continuous_pheno_continuous_PS_covs_basic <- merge(continuous_pheno_continuous_PS, basic_covs, by = "id")
+    
+    continuous_PS_formula_basic <- as.formula(
+        paste0("scale(pheno) ~ scale(continuous_protS) + ", covs_formu_basic)
+    )
+
+    continuous_pheno_continuous_PS_assoc_mod_basic <- lm(continuous_PS_formula_basic, 
+                    data = continuous_pheno_continuous_PS_covs_basic)
+    
+    continuous_pheno_continuous_PS_assoc_coefs_basic <- summary(continuous_pheno_continuous_PS_assoc_mod_basic)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
+    
+    # save the coefficients 
+    continuous_pheno_continuous_PS_assoc_coefs_basic_outfile <- file.path(out_dir, continuous_pheno_name, continuous_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_PS_assoc_coefs_basic.rds"))
+    saveRDS(continuous_pheno_continuous_PS_assoc_coefs_basic, continuous_pheno_continuous_PS_assoc_coefs_basic_outfile)
+
+    rsq_value_basic <- summary(continuous_pheno_continuous_PS_assoc_mod_basic)$r.squared
+    incr_rsq_value_basic <- summary(continuous_pheno_continuous_PS_assoc_mod_basic)$r.squared - summary(continuous_pheno_assoc_mod)$r.squared
+
+    print(paste0("R squared value for continuous phenotype continuous weights (basic): ", rsq_value_basic))
+    print(paste0("Incremental R squared value for continuous phenotype continuous weights (basic): ", incr_rsq_value_basic))
+
+    continuous_pheno_continuous_weights_desc_stats_basic <- data.frame(
+      model = "basic",
+      weights = continuous_weights_name,
+      Phenotype = continuous_pheno_name,
+      beta = summary(continuous_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Estimate"],
+      std = summary(continuous_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Std. Error"],
+      p = summary(continuous_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Pr(>|t|)"],
+      R2 = rsq_value_basic,
+      Incremental_R2 = incr_rsq_value_basic,
+      AUC = NA,
+      Incremental_AUC = NA
+      )
+    
+    desc_stats <- desc_stats |> rbind(continuous_pheno_continuous_weights_desc_stats_basic)
   }
 }
 
