@@ -47,7 +47,6 @@ Arguments:
 --continuous_pheno : The file path for the outcome continuous phenotype \
 --continuous_pheno_name : Name of the outcome continuous phenotype (e.g. "PHQ") \
 --covs : The file path for the covariates \
---missingness_cov : Whether or not the number of missing proteins should be included as a covariate in the models. Default FALSE \
 --outdir : Name of the directory where the outputs will be saved. The directory will be created by the script.
 ```
 
