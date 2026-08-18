@@ -13,6 +13,11 @@ library(pROC)
 library(caret)
 library(PRROC)
 
+transform <- function(x) {
+  transformed <- qnorm((rank(x,na.last="keep")-0.5)/sum(!is.na(x)))
+  return(transformed)
+}
+
 parse <- OptionParser()
 
 # setting up options for the filepaths to the correct files
@@ -83,11 +88,6 @@ missingness <- data.frame(id = ms_prot$id, missing_prots = rowSums(is.na(ms_prot
 saveRDS(missingness, file.path(out_dir, "missing_proteins.rds"))
 
 rm(proteins) # remove large protein object 
-
-transform <- function(x) {
-  transformed <- qnorm((rank(x,na.last="keep")-0.5)/sum(!is.na(x)))
-  return(transformed)
-}
 
 prot_std <- mapply(
               transform,
@@ -319,8 +319,17 @@ if(opt$binary_pheno!="NULL"){
     
     aucF <- auc(binary_pheno_binary_PS_covs[complete.cases(binary_pheno_binary_PS_covs),]$pheno, binary_pheno_binary_PS_assoc_mod$linear.predictors)  ### AUC for full module
 
+    Incremental_auc <- aucF - auc(
+      binary_pheno_binary_PS_covs[complete.cases(binary_pheno_binary_PS_covs),]$pheno, 
+      glm(
+        binary_covs_formula, 
+        family=binomial(link=logit), 
+        data = binary_pheno_binary_PS_covs[complete.cases(binary_pheno_binary_PS_covs),]
+        )$linear.predictors
+      )  
+
     print(paste0("AUC value for binary phenotype binary weights: ", aucF))
-    print(paste0("Incremental AUC value for binary phenotype binary weights: ", aucF - aucR))
+    print(paste0("Incremental AUC value for binary phenotype binary weights: ", Incremental_auc))
 
     binary_pheno_binary_PS_predicted_probs <- predict(binary_pheno_binary_PS_assoc_mod, type = 'response')
     roc_curve <- roc(binary_pheno_binary_PS_covs[complete.cases(binary_pheno_binary_PS_covs),]$pheno, binary_pheno_binary_PS_predicted_probs)    
@@ -349,7 +358,7 @@ if(opt$binary_pheno!="NULL"){
       R2 = NA,
       Incremental_R2 = NA,
       AUC = aucF,
-      Incremental_AUC = aucF - aucR
+      Incremental_AUC = Incremental_auc
       )
 
     desc_stats <- desc_stats |> rbind(binary_pheno_binary_weights_desc_stats)
@@ -382,8 +391,17 @@ if(opt$binary_pheno!="NULL"){
     
     aucF_basic <- auc(binary_pheno_binary_PS_covs_basic[complete.cases(binary_pheno_binary_PS_covs_basic),]$pheno, binary_pheno_binary_PS_assoc_mod_basic$linear.predictors)  ### AUC for full module
 
+    Incremental_auc_basic <- aucF_basic - auc(
+      binary_pheno_binary_PS_covs_basic[complete.cases(binary_pheno_binary_PS_covs_basic),]$pheno, 
+      glm(
+        binary_covs_formula_basic, 
+        family=binomial(link=logit), 
+        data = binary_pheno_binary_PS_covs_basic[complete.cases(binary_pheno_binary_PS_covs_basic),]
+        )$linear.predictors
+      )  
+
     print(paste0("AUC value for binary phenotype binary weights (basic model): ", aucF_basic))
-    print(paste0("Incremental AUC value for binary phenotype binary weights basic model): ", aucF_basic - aucR_basic))
+    print(paste0("Incremental AUC value for binary phenotype binary weights basic model): ", Incremental_auc_basic))
 
     binary_pheno_binary_PS_predicted_probs_basic <- predict(binary_pheno_binary_PS_assoc_mod_basic, type = 'response')
     roc_curve_basic <- roc(binary_pheno_binary_PS_covs_basic[complete.cases(binary_pheno_binary_PS_covs_basic),]$pheno, binary_pheno_binary_PS_predicted_probs_basic)    
@@ -412,7 +430,7 @@ if(opt$binary_pheno!="NULL"){
       R2 = NA,
       Incremental_R2 = NA,
       AUC = aucF_basic,
-      Incremental_AUC = aucF_basic - aucR_basic
+      Incremental_AUC = Incremental_auc_basic
       )
 
     desc_stats <- desc_stats |> rbind(binary_pheno_binary_weights_desc_stats_basic)
@@ -469,8 +487,17 @@ if(opt$binary_pheno!="NULL"){
     
     aucF <- auc(binary_pheno_continuous_PS_covs[complete.cases(binary_pheno_continuous_PS_covs),]$pheno, binary_pheno_continuous_PS_assoc_mod$linear.predictors)  ### AUC for full module
 
+    Incremental_auc <- aucF - auc(
+      binary_pheno_continuous_PS_covs[complete.cases(binary_pheno_continuous_PS_covs),]$pheno, 
+      glm(
+        binary_covs_formula, 
+        family=binomial(link=logit), 
+        data = binary_pheno_continuous_PS_covs[complete.cases(binary_pheno_continuous_PS_covs),]
+        )$linear.predictors
+      )
+
     print(paste0("AUC value for binary phenotype continuous weights: ", aucF))
-    print(paste0("Incremental AUC value for binary phenotype continuous weights: ", aucF - aucR))
+    print(paste0("Incremental AUC value for binary phenotype continuous weights: ", Incremental_auc))
 
     binary_pheno_continuous_PS_predicted_probs <- predict(binary_pheno_continuous_PS_assoc_mod, type = 'response')
     roc_curve <- roc(binary_pheno_continuous_PS_covs[complete.cases(binary_pheno_continuous_PS_covs),]$pheno, binary_pheno_continuous_PS_predicted_probs)    
@@ -499,7 +526,7 @@ if(opt$binary_pheno!="NULL"){
       R2 = NA,
       Incremental_R2 = NA,
       AUC = aucF,
-      Incremental_AUC = aucF - aucR
+      Incremental_AUC = Incremental_auc
       )
 
     desc_stats <- desc_stats |> rbind(binary_pheno_continuous_weights_desc_stats)
@@ -532,8 +559,17 @@ if(opt$binary_pheno!="NULL"){
     
     aucF_basic <- auc(binary_pheno_continuous_PS_covs_basic[complete.cases(binary_pheno_continuous_PS_covs_basic),]$pheno, binary_pheno_continuous_PS_assoc_mod_basic$linear.predictors)  ### AUC for full module
 
+    Incremental_auc_basic <- aucF_basic - auc(
+      binary_pheno_continuous_PS_covs_basic[complete.cases(binary_pheno_continuous_PS_covs_basic),]$pheno, 
+      glm(
+        binary_covs_formula_basic, 
+        family=binomial(link=logit), 
+        data = binary_pheno_continuous_PS_covs_basic[complete.cases(binary_pheno_continuous_PS_covs_basic),]
+        )$linear.predictors
+      )  
+
     print(paste0("AUC value for binary phenotype continuous weights (basic): ", aucF_basic))
-    print(paste0("Incremental AUC value for binary phenotype continuous weights (basic): ", aucF_basic - aucR))
+    print(paste0("Incremental AUC value for binary phenotype continuous weights (basic): ", Incremental_auc_basic))
 
     binary_pheno_continuous_PS_predicted_probs_basic <- predict(binary_pheno_continuous_PS_assoc_mod_basic, type = 'response')
     roc_curve_basic <- roc(binary_pheno_continuous_PS_covs_basic[complete.cases(binary_pheno_continuous_PS_covs_basic),]$pheno, binary_pheno_continuous_PS_predicted_probs_basic)    
@@ -562,7 +598,7 @@ if(opt$binary_pheno!="NULL"){
       R2 = NA,
       Incremental_R2 = NA,
       AUC = aucF_basic,
-      Incremental_AUC = aucF_basic - aucR
+      Incremental_AUC = Incremental_auc_basic
       )
 
     desc_stats <- desc_stats |> rbind(binary_pheno_continuous_weights_desc_stats_basic)
@@ -654,7 +690,9 @@ if(opt$continuous_pheno!="NULL"){
     saveRDS(continuous_pheno_binary_PS_assoc_coefs, continuous_pheno_binary_PS_assoc_coefs_outfile)
 
     rsq_value <- summary(continuous_pheno_binary_PS_assoc_mod)$r.squared
-    incr_rsq_value <- summary(continuous_pheno_binary_PS_assoc_mod)$r.squared - summary(continuous_pheno_assoc_mod)$r.squared
+    incr_rsq_value <- summary(continuous_pheno_binary_PS_assoc_mod)$r.squared - summary(lm(continuous_covs_formula, data = filter(continuous_pheno_binary_PS_covs, !is.na(binary_protS))))$r.squared
+
+    
 
     print(paste0("R squared value for continuous phenotype binary weights: ", rsq_value))
     print(paste0("Incremental R squared value for continuous phenotype binary weights: ", incr_rsq_value))
@@ -703,7 +741,7 @@ if(opt$continuous_pheno!="NULL"){
     saveRDS(continuous_pheno_binary_PS_assoc_coefs_basic, continuous_pheno_binary_PS_assoc_coefs_basic_outfile)
 
     rsq_value_basic <- summary(continuous_pheno_binary_PS_assoc_mod_basic)$r.squared
-    incr_rsq_value <- summary(continuous_pheno_binary_PS_assoc_mod_basic)$r.squared - summary(continuous_pheno_assoc_mod_basic)$r.squared
+    incr_rsq_value <- summary(continuous_pheno_binary_PS_assoc_mod_basic)$r.squared - summary(lm(continuous_covs_formula_basic, data = filter(continuous_pheno_binary_PS_covs, !is.na(binary_protS))))$r.squared
 
     print(paste0("R squared value for continuous phenotype binary weights (basic): ", rsq_value_basic))
     print(paste0("Incremental R squared value for continuous phenotype binary weights (basic): ", incr_rsq_value))
@@ -762,7 +800,7 @@ if(opt$continuous_pheno!="NULL"){
     saveRDS(continuous_pheno_continuous_PS_assoc_coefs, continuous_pheno_continuous_PS_assoc_coefs_outfile)
 
     rsq_value <- summary(continuous_pheno_continuous_PS_assoc_mod)$r.squared
-    incr_rsq_value <- summary(continuous_pheno_continuous_PS_assoc_mod)$r.squared - summary(continuous_pheno_assoc_mod)$r.squared
+    incr_rsq_value <- summary(continuous_pheno_continuous_PS_assoc_mod)$r.squared - summary(lm(continuous_covs_formula, data = filter(continuous_pheno_continuous_PS_covs, !is.na(continuous_protS))))$r.squared
 
     print(paste0("R squared value for continuous phenotype continuous weights: ", rsq_value))
     print(paste0("Incremental R squared value for continuous phenotype continuous weights: ", incr_rsq_value))
@@ -811,7 +849,7 @@ if(opt$continuous_pheno!="NULL"){
     saveRDS(continuous_pheno_continuous_PS_assoc_coefs_basic, continuous_pheno_continuous_PS_assoc_coefs_basic_outfile)
 
     rsq_value_basic <- summary(continuous_pheno_continuous_PS_assoc_mod_basic)$r.squared
-    incr_rsq_value <- summary(continuous_pheno_continuous_PS_assoc_mod_basic)$r.squared - summary(continuous_pheno_assoc_mod_basic)$r.squared
+    incr_rsq_value <- summary(continuous_pheno_continuous_PS_assoc_mod_basic)$r.squared - summary(lm(continuous_covs_formula_basic, data = filter(continuous_pheno_continuous_PS_covs, !is.na(continuous_protS))))$r.squared
 
     print(paste0("R squared value for continuous phenotype continuous weights (basic): ", rsq_value_basic))
     print(paste0("Incremental R squared value for continuous phenotype continuous weights (basic): ", incr_rsq_value))
