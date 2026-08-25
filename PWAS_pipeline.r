@@ -238,7 +238,7 @@ if(opt$binary_pheno!="NULL"){
   saveRDS(binary_pheno_assoc_mod, file.path(out_dir, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_assoc_mod.rds")))
 
   binary_pheno_assoc_mod_missingness <- glm(
-      binary_covs_formula, 
+      as.formula(paste0("as.factor(pheno) ~ ", covs_formu, " + missing_prots")), 
       family=binomial (link=logit), 
       data = left_join(binary_pheno_covs, missingness, by = "id")
       )
@@ -260,7 +260,7 @@ if(opt$binary_pheno!="NULL"){
   saveRDS(binary_pheno_assoc_mod_basic, file.path(out_dir, binary_pheno_name, paste0(cohort, "_", binary_pheno_name, "_assoc_mod_basic.rds")))
 
   binary_pheno_assoc_mod_basic_missingness <- glm(
-      binary_covs_formula_basic, 
+      as.formula(paste0("as.factor(pheno) ~ ", covs_formu_basic, " + missing_prots")), 
       family=binomial (link=logit), 
       data = left_join(binary_pheno_covs_basic, missingness, by = "id")
       )
@@ -305,7 +305,7 @@ if(opt$binary_pheno!="NULL"){
     saveRDS(binary_pheno_binary_PS_assoc_mod, file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_assoc_mod.rds")))
 
     binary_pheno_binary_PS_assoc_mod_missingness <- glm(
-        binary_covs_PS_formula, 
+        as.formula(paste0("as.factor(pheno) ~ ", covs_formu, " + scale(binary_protS) + missing_prots")),    
         family=binomial (link=logit), 
         data = left_join(binary_pheno_binary_PS_covs, missingness, by = "id")
         )
@@ -377,7 +377,7 @@ if(opt$binary_pheno!="NULL"){
     saveRDS(binary_pheno_binary_PS_assoc_mod_basic, file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_assoc_mod_basic.rds")))
 
     binary_pheno_binary_PS_assoc_mod_basic_missingness <- glm(
-        binary_covs_PS_formula_basic, 
+        as.formula(paste0("as.factor(pheno) ~ ", covs_formu_basic, " + scale(binary_protS) + missing_prots")),        
         family=binomial (link=logit), 
         data = left_join(binary_pheno_binary_PS_covs_basic, missingness, by = "id")
         )
@@ -473,7 +473,7 @@ if(opt$binary_pheno!="NULL"){
     saveRDS(binary_pheno_continuous_PS_assoc_mod, file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_assoc_mod.rds")))
 
     binary_pheno_continuous_PS_assoc_mod_missingness <- glm(
-        binary_covs_PS_formula, 
+        as.formula(paste0("as.factor(pheno) ~ ", covs_formu, " + scale(continuous_protS) + missing_prots")),        
         family=binomial (link=logit), 
         data = left_join(binary_pheno_continuous_PS_covs, missingness, by = "id")
         )
@@ -545,7 +545,7 @@ if(opt$binary_pheno!="NULL"){
     saveRDS(binary_pheno_continuous_PS_assoc_mod_basic, file.path(out_dir, binary_pheno_name, continuous_weights_name, paste0(cohort, "_", binary_pheno_name, "_", continuous_weights_name, "_assoc_mod_basic.rds")))
 
     binary_pheno_continuous_PS_assoc_mod_basic_missingness <- glm(
-        binary_covs_PS_formula_basic, 
+        as.formula(paste0("as.factor(pheno) ~ ", covs_formu_basic, " + scale(continuous_protS) + missing_prots")),          
         family=binomial (link=logit), 
         data = left_join(binary_pheno_continuous_PS_covs_basic, missingness, by = "id")
         )
@@ -630,7 +630,7 @@ if(opt$continuous_pheno!="NULL"){
   saveRDS(continuous_pheno_assoc_mod, file.path(out_dir, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_assoc_mod.rds")))
 
   continuous_pheno_assoc_mod_missingness <- lm(
-      continuous_covs_formula, 
+      as.formula(paste0("scale(pheno) ~ ", covs_formu, " + missing_prots")),  
       data = left_join(continuous_pheno_covs, missingness, by = "id")
       )
   saveRDS(continuous_pheno_assoc_mod_missingness, file.path(out_dir, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_assoc_mod_missingness.rds")))
@@ -648,7 +648,7 @@ if(opt$continuous_pheno!="NULL"){
   saveRDS(continuous_pheno_assoc_mod_basic, file.path(out_dir, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_assoc_mod_basic.rds")))
 
   continuous_pheno_assoc_mod_basic_missingness <- lm(
-      continuous_covs_formula_basic, 
+      as.formula(paste0("scale(pheno) ~ ", covs_formu_basic, " + missing_prots")),    
       data = left_join(continuous_pheno_covs_basic, missingness, by = "id")
       )
   saveRDS(continuous_pheno_assoc_mod_basic_missingness, file.path(out_dir, continuous_pheno_name, paste0(cohort, "_", continuous_pheno_name, "_assoc_mod_basic_missingness.rds")))
@@ -679,8 +679,10 @@ if(opt$continuous_pheno!="NULL"){
                     data = continuous_pheno_binary_PS_covs)
     saveRDS(continuous_pheno_binary_PS_assoc_mod, file.path(out_dir, continuous_pheno_name, binary_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "_assoc_mod.rds")))
 
-    continuous_pheno_binary_PS_assoc_mod_missingness <- lm(binary_PS_formula, 
-                    data = left_join(continuous_pheno_binary_PS_covs, missingness, by = "id"))
+    continuous_pheno_binary_PS_assoc_mod_missingness <- lm(
+      as.formula(paste0("scale(pheno) ~ scale(binary_protS) + ", covs_formu, " + missing_prots")),  
+      data = left_join(continuous_pheno_binary_PS_covs, missingness, by = "id")
+      )
     saveRDS(continuous_pheno_binary_PS_assoc_mod_missingness, file.path(out_dir, continuous_pheno_name, binary_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "_assoc_mod_missingness.rds")))
     
     continuous_pheno_binary_PS_assoc_coefs <- summary(continuous_pheno_binary_PS_assoc_mod)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
@@ -730,8 +732,10 @@ if(opt$continuous_pheno!="NULL"){
                     data = continuous_pheno_binary_PS_covs_basic)
     saveRDS(continuous_pheno_binary_PS_assoc_mod_basic, file.path(out_dir, continuous_pheno_name, binary_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "_assoc_mod_basic.rds")))
 
-    continuous_pheno_binary_PS_assoc_mod_basic_missingness <- lm(binary_PS_formula_basic, 
-                    data = left_join(continuous_pheno_binary_PS_covs_basic, missingness, by = "id"))
+    continuous_pheno_binary_PS_assoc_mod_basic_missingness <- lm(     
+      as.formula(paste0("scale(pheno) ~ scale(binary_protS) + ", covs_formu_basic, " + missing_prots")),   
+      data = left_join(continuous_pheno_binary_PS_covs_basic, missingness, by = "id")
+      )
     saveRDS(continuous_pheno_binary_PS_assoc_mod_basic_missingness, file.path(out_dir, continuous_pheno_name, binary_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", binary_weights_name, "assoc_mod_basic_missingness.rds")))
     
     continuous_pheno_binary_PS_assoc_coefs_basic <- summary(continuous_pheno_binary_PS_assoc_mod_basic)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
@@ -789,8 +793,10 @@ if(opt$continuous_pheno!="NULL"){
                     data = continuous_pheno_continuous_PS_covs)
     saveRDS(continuous_pheno_continuous_PS_assoc_mod, file.path(out_dir, continuous_pheno_name, continuous_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_assoc_mod.rds")))
 
-    continuous_pheno_continuous_PS_assoc_mod_missingness <- lm(continuous_PS_formula, 
-                    data = left_join(continuous_pheno_continuous_PS_covs, missingness, by = "id"))
+    continuous_pheno_continuous_PS_assoc_mod_missingness <- lm(
+      as.formula(paste0("scale(pheno) ~ scale(continuous_protS) + ", covs_formu, " + missing_prots")),
+      data = left_join(continuous_pheno_continuous_PS_covs, missingness, by = "id")
+      )
     saveRDS(continuous_pheno_continuous_PS_assoc_mod_missingness, file.path(out_dir, continuous_pheno_name, continuous_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_assoc_mod_missingness.rds")))
     
     continuous_pheno_continuous_PS_assoc_coefs <- summary(continuous_pheno_continuous_PS_assoc_mod)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
@@ -838,8 +844,10 @@ if(opt$continuous_pheno!="NULL"){
                     data = continuous_pheno_continuous_PS_covs_basic)
     saveRDS(continuous_pheno_continuous_PS_assoc_mod_basic, file.path(out_dir, continuous_pheno_name, continuous_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_assoc_mod_basic.rds")))
 
-    continuous_pheno_continuous_PS_assoc_mod_basic_missingness <- lm(continuous_PS_formula_basic, 
-                    data = left_join(continuous_pheno_continuous_PS_covs_basic, missingness, by = "id"))
+    continuous_pheno_continuous_PS_assoc_mod_basic_missingness <- lm(     
+      as.formula(paste0("scale(pheno) ~ scale(continuous_protS) + ", covs_formu_basic, " + missing_prots")), 
+      data = left_join(continuous_pheno_continuous_PS_covs_basic, missingness, by = "id")
+      )
     saveRDS(continuous_pheno_continuous_PS_assoc_mod_basic_missingness, file.path(out_dir, continuous_pheno_name, continuous_weights_name, paste0(cohort, "_", continuous_pheno_name, "_", continuous_weights_name, "_assoc_mod_basic_missingness.rds")))
     
     continuous_pheno_continuous_PS_assoc_coefs_basic <- summary(continuous_pheno_continuous_PS_assoc_mod_basic)$coefficients %>% as.data.frame() |> rownames_to_column(var = "Coefficient")
