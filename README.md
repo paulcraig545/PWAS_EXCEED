@@ -69,7 +69,7 @@ Rscript PWAS_pipeline.r \
     --continuous_pheno ["continuous_pheno_file.rds"] \
     --continuous_pheno_name ["continuous_pheno_name"] \
     --covs ["covariates_file.rds"] \
-    --outdir "PWAS_pipeline_out/"
+    --outdir "PWAS_pipeline_out_currentMDD_likertD/"
 ```
 
 
@@ -92,5 +92,5 @@ Rscript PWAS_pipeline.r \
     --continuous_pheno ["continuous_pheno_file.rds"] \
     --continuous_pheno_name ["continuous_pheno_name"] \
     --covs ["covariates_file.rds"] \
-    --outdir "PWAS_pipeline_out/"
+    --outdir "PWAS_pipeline_out_severeMDD_likertTotal/"
 ```
