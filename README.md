@@ -59,7 +59,7 @@ Rscript PWAS_pipeline.r \
     --cohort "GS" \
     --proteins ["proteins_file.rds"] \
     --probe "protein_list_newProts.rds" \
-    --id_column "id" \
+    --id_column ["id"] \
     --binary_weights "weights_currentMDD.rds" \
     --binary_weights_name "MDD" \
     --continuous_weights "weights_likertD.rds" \
@@ -75,7 +75,9 @@ Rscript PWAS_pipeline.r \
 
 Run the pipeline a second time, with 
 1) The binary weights arguments replaced with the weights trained on the severe MDD score which we have provided, to get the outputs for protein scores trained on severe MDD total
-2) The continuous weights arguments replaced with the weights trained on the total GHQ score which we have provided, to get the outputs for protein scores trained on GHQ total.  
+2) The continuous weights arguments replaced with the weights trained on the total GHQ score which we have provided, to get the outputs for protein scores trained on GHQ total.
+
+Please ensure that the outdir argument is different each run of the pipeline (as it is in the examples provided) so as to avoid overwriting results. 
 
 ```bash
 Rscript PWAS_pipeline.r \
