@@ -193,7 +193,10 @@ if(file.exists(file.path(out_dir, "descriptive_statistics.csv"))){
 desc_stats <- data.frame(
   model = character(),
   weights = character(), 
-  Phenotype = character(), 
+  phenotype = character(), 
+  n = numeric(),
+  cases = numeric(),
+  controls = numeric(),
   beta = numeric(), 
   std = numeric(), 
   p = numeric(), 
@@ -219,9 +222,9 @@ if(opt$binary_pheno!="NULL"){
 
   binary_pheno_covs <- left_join(binary_pheno, all_covs, by = "id")
   print(
-    paste0(table(binary_pheno_covs[complete.cases(binary_pheno_covs),]$pheno)["1"], 
+    paste0(table(binary_pheno_covs$pheno)["1"], 
     " cases and ", 
-    paste0(table(binary_pheno_covs[complete.cases(binary_pheno_covs),]$pheno)["0"]), 
+    paste0(table(binary_pheno_covs$pheno)["0"]), 
     " controls in binary phenotype"
     )
   )
@@ -351,7 +354,10 @@ if(opt$binary_pheno!="NULL"){
     binary_pheno_binary_weights_desc_stats <- data.frame(
       model = "full",
       weights = binary_weights_name,
-      Phenotype = binary_pheno_name,
+      phenotype = binary_pheno_name,
+      n = dim(binary_pheno_binary_PS_assoc_mod$data[complete.cases(binary_pheno_binary_PS_assoc_mod$data),])[1],
+      cases = table(binary_pheno_binary_PS_assoc_mod$data[complete.cases(binary_pheno_binary_PS_assoc_mod$data),]$pheno)["1"],
+      controls = table(binary_pheno_binary_PS_assoc_mod$data[complete.cases(binary_pheno_binary_PS_assoc_mod$data),]$pheno)["0"],
       beta = summary(binary_pheno_binary_PS_assoc_mod)$coefficients["scale(binary_protS)", "Estimate"],
       std = summary(binary_pheno_binary_PS_assoc_mod)$coefficients["scale(binary_protS)", "Std. Error"],
       p = summary(binary_pheno_binary_PS_assoc_mod)$coefficients["scale(binary_protS)", "Pr(>|z|)"],
@@ -390,6 +396,8 @@ if(opt$binary_pheno!="NULL"){
     saveRDS(binary_pheno_binary_PS_assoc_coefs_basic, binary_pheno_binary_PS_assoc_coefs_basic_outfile)
     
     aucF_basic <- auc(binary_pheno_binary_PS_covs_basic[complete.cases(binary_pheno_binary_PS_covs_basic),]$pheno, binary_pheno_binary_PS_assoc_mod_basic$linear.predictors)  ### AUC for full module
+    saveRDS(aucF_basic, file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_aucF_basic.rds")))
+
 
     Incremental_auc_basic <- aucF_basic - auc(
       binary_pheno_binary_PS_covs_basic[complete.cases(binary_pheno_binary_PS_covs_basic),]$pheno, 
@@ -423,7 +431,10 @@ if(opt$binary_pheno!="NULL"){
     binary_pheno_binary_weights_desc_stats_basic <- data.frame(
       model = "basic",
       weights = binary_weights_name,
-      Phenotype = binary_pheno_name,
+      phenotype = binary_pheno_name,
+      n = dim(binary_pheno_binary_PS_assoc_mod_basic$data[complete.cases(binary_pheno_binary_PS_assoc_mod_basic$data),])[1],
+      cases = table(binary_pheno_binary_PS_assoc_mod_basic$data[complete.cases(binary_pheno_binary_PS_assoc_mod_basic$data),]$pheno)["1"],
+      controls = table(binary_pheno_binary_PS_assoc_mod_basic$data[complete.cases(binary_pheno_binary_PS_assoc_mod_basic$data),]$pheno)["0"],
       beta = summary(binary_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Estimate"],
       std = summary(binary_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Std. Error"],
       p = summary(binary_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Pr(>|z|)"],
@@ -519,7 +530,10 @@ if(opt$binary_pheno!="NULL"){
     binary_pheno_continuous_weights_desc_stats <- data.frame(
       model = "full",
       weights = continuous_weights_name,
-      Phenotype = binary_pheno_name,
+      phenotype = binary_pheno_name,
+      n = dim(binary_pheno_continuous_PS_assoc_mod$data[complete.cases(binary_pheno_continuous_PS_assoc_mod$data),])[1],
+      cases = table(binary_pheno_continuous_PS_assoc_mod$data[complete.cases(binary_pheno_continuous_PS_assoc_mod$data),]$pheno)["1"],
+      controls = table(binary_pheno_continuous_PS_assoc_mod$data[complete.cases(binary_pheno_continuous_PS_assoc_mod$data),]$pheno)["0"],
       beta = summary(binary_pheno_continuous_PS_assoc_mod)$coefficients["scale(continuous_protS)", "Estimate"],
       std = summary(binary_pheno_continuous_PS_assoc_mod)$coefficients["scale(continuous_protS)", "Std. Error"],
       p = summary(binary_pheno_continuous_PS_assoc_mod)$coefficients["scale(continuous_protS)", "Pr(>|z|)"],
@@ -591,7 +605,10 @@ if(opt$binary_pheno!="NULL"){
     binary_pheno_continuous_weights_desc_stats_basic <- data.frame(
       model = "basic",
       weights = continuous_weights_name,
-      Phenotype = binary_pheno_name,
+      phenotype = binary_pheno_name,
+      n = dim(binary_pheno_continuous_PS_assoc_mod_basic$data[complete.cases(binary_pheno_continuous_PS_assoc_mod_basic$data),])[1],
+      cases = table(binary_pheno_continuous_PS_assoc_mod_basic$data[complete.cases(binary_pheno_continuous_PS_assoc_mod_basic$data),]$pheno)["1"],
+      controls = table(binary_pheno_continuous_PS_assoc_mod_basic$data[complete.cases(binary_pheno_continuous_PS_assoc_mod_basic$data),]$pheno)["0"],
       beta = summary(binary_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Estimate"],
       std = summary(binary_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Std. Error"],
       p = summary(binary_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Pr(>|z|)"],
@@ -618,6 +635,7 @@ if(opt$continuous_pheno!="NULL"){
   continuous_pheno <- continuous_pheno %>% filter(!is.na(pheno)) # remove missing values if there are any 
 
   continuous_pheno_covs <- left_join(continuous_pheno, all_covs, by = "id")
+  print(paste0(dim(continuous_pheno_covs)[1], " samples in continuous phenotype"))
 
   continuous_covs_formula <- as.formula(
       paste0("scale(pheno) ~ ", covs_formu)
@@ -710,7 +728,10 @@ if(opt$continuous_pheno!="NULL"){
     continuous_pheno_binary_weights_desc_stats <- data.frame(
       model = "full",
       weights = binary_weights_name,
-      Phenotype = continuous_pheno_name,
+      phenotype = continuous_pheno_name,
+      n = dim(continuous_pheno_binary_PS_assoc_mod$model[complete.cases(continuous_pheno_binary_PS_assoc_mod$model),])[1],
+      cases = NA,
+      controls = NA,
       beta = summary(continuous_pheno_binary_PS_assoc_mod)$coefficients["scale(binary_protS)", "Estimate"],
       std = summary(continuous_pheno_binary_PS_assoc_mod)$coefficients["scale(binary_protS)", "Std. Error"],
       p = summary(continuous_pheno_binary_PS_assoc_mod)$coefficients["scale(binary_protS)", "Pr(>|t|)"],
@@ -753,7 +774,10 @@ if(opt$continuous_pheno!="NULL"){
     continuous_pheno_binary_weights_desc_stats_basic <- data.frame(
       model = "basic",
       weights = binary_weights_name,
-      Phenotype = continuous_pheno_name,
+      phenotype = continuous_pheno_name,
+      n = dim(continuous_pheno_binary_PS_assoc_mod_basic$model[complete.cases(continuous_pheno_binary_PS_assoc_mod_basic$model),])[1],
+      cases = NA,
+      controls = NA,
       beta = summary(continuous_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Estimate"],
       std = summary(continuous_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Std. Error"],
       p = summary(continuous_pheno_binary_PS_assoc_mod_basic)$coefficients["scale(binary_protS)", "Pr(>|t|)"],
@@ -822,7 +846,10 @@ if(opt$continuous_pheno!="NULL"){
     continuous_pheno_continuous_weights_desc_stats <- data.frame(
       model = "full",
       weights = continuous_weights_name,
-      Phenotype = continuous_pheno_name,
+      phenotype = continuous_pheno_name,
+      n = dim(continuous_pheno_continuous_PS_assoc_mod$model[complete.cases(continuous_pheno_continuous_PS_assoc_mod$model),])[1],
+      cases = NA,
+      controls = NA,
       beta = summary(continuous_pheno_continuous_PS_assoc_mod)$coefficients["scale(continuous_protS)", "Estimate"],
       std = summary(continuous_pheno_continuous_PS_assoc_mod)$coefficients["scale(continuous_protS)", "Std. Error"],
       p = summary(continuous_pheno_continuous_PS_assoc_mod)$coefficients["scale(continuous_protS)", "Pr(>|t|)"],
@@ -865,7 +892,10 @@ if(opt$continuous_pheno!="NULL"){
     continuous_pheno_continuous_weights_desc_stats_basic <- data.frame(
       model = "basic",
       weights = continuous_weights_name,
-      Phenotype = continuous_pheno_name,
+      phenotype = continuous_pheno_name,
+      n = dim(continuous_pheno_continuous_PS_assoc_mod_basic$model[complete.cases(continuous_pheno_continuous_PS_assoc_mod_basic$model),])[1],
+      cases = NA,
+      controls = NA,
       beta = summary(continuous_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Estimate"],
       std = summary(continuous_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Std. Error"],
       p = summary(continuous_pheno_continuous_PS_assoc_mod_basic)$coefficients["scale(continuous_protS)", "Pr(>|t|)"],
