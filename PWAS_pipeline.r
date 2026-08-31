@@ -396,8 +396,6 @@ if(opt$binary_pheno!="NULL"){
     saveRDS(binary_pheno_binary_PS_assoc_coefs_basic, binary_pheno_binary_PS_assoc_coefs_basic_outfile)
     
     aucF_basic <- auc(binary_pheno_binary_PS_covs_basic[complete.cases(binary_pheno_binary_PS_covs_basic),]$pheno, binary_pheno_binary_PS_assoc_mod_basic$linear.predictors)  ### AUC for full module
-    saveRDS(aucF_basic, file.path(out_dir, binary_pheno_name, binary_weights_name, paste0(cohort, "_", binary_pheno_name, "_", binary_weights_name, "_aucF_basic.rds")))
-
 
     Incremental_auc_basic <- aucF_basic - auc(
       binary_pheno_binary_PS_covs_basic[complete.cases(binary_pheno_binary_PS_covs_basic),]$pheno, 
